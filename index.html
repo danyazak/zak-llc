@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Заповнення Бланка</title>
+</head>
+<body>
+  <h1>Заповнення Бланка</h1>
+  <form id="form">
+    <h3>Ship From:</h3>
+    <label>Address:</label>
+    <input type="text" id="shipFromAddress" placeholder="Enter address"><br>
+    <label>City/State/Zip:</label>
+    <input type="text" id="shipFromCity" placeholder="Enter city/state/zip"><br>
+    <label>Name:</label>
+    <input type="text" id="shipFromName" placeholder="Enter name"><br>
+    <label>SID#:</label>
+    <input type="text" id="shipFromSID" placeholder="Enter SID#"><br>
+
+    <h3>Ship To:</h3>
+    <label>Address:</label>
+    <input type="text" id="shipToAddress" placeholder="Enter address"><br>
+    <label>City/State/Zip:</label>
+    <input type="text" id="shipToCity" placeholder="Enter city/state/zip"><br>
+    <label>Name:</label>
+    <input type="text" id="shipToName" placeholder="Enter name"><br>
+    <label>SID#:</label>
+    <input type="text" id="shipToSID" placeholder="Enter SID#"><br>
+
+    <h3>Additional Information:</h3>
+    <label>Packages (PKGS):</label>
+    <input type="text" id="pkgs" placeholder="Enter number of packages"><br>
+    <label>Weight:</label>
+    <input type="text" id="weight" placeholder="Enter weight"><br>
+    <label>Shipper Information:</label>
+    <input type="text" id="shipperInfo" placeholder="Enter shipper info"><br>
+
+    <h3>Weight, PKGS, and Shipper Info (2-8):</h3>
+    <div id="dynamicFields">
+      <!-- Динамічні поля -->
+    </div>
+
+    <button type="button" id="generate">Генерувати PDF</button>
+  </form>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // URL шаблона PDF
+      const templateUrl = 'https://your-username.github.io/your-repository/template.pdf';
+
+      // Динамічне створення полів weight, pkgs, shipperInfo від 2 до 8
+      const dynamicFieldsContainer = document.getElementById('dynamicFields');
+      for (let i = 2; i <= 8; i++) {
+        dynamicFieldsContainer.innerHTML += `
+          <label>Weight ${i}:</label>
+          <input type="text" id="weight${i}" placeholder="Enter weight ${i}"><br>
+          <label>PKGS ${i}:</label>
+          <input type="text" id="pkgs${i}" placeholder="Enter PKGS ${i}"><br>
+          <label>Shipper Info ${i}:</label>
+          <input type="text" id="shipperInfo${i}" placeholder="Enter Shipper Info ${i}"><br>
+        `;
+      }
+
+      document.getElementById('generate').addEventListener('click', async () => {
+        // Завантаження PDF-шаблона з GitHub Pages
+        const arrayBuffer = await fetch(templateUrl).then(res => res.arrayBuffer());
+
+        // Завантаження PDF у PDF-Lib
+        const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+        const form = pdfDoc.getForm();
+
+        // Основні текстові поля
+        const fields = [
+          'shipFromAddress', 'shipFromCity', 'shipFromName', 'shipFromSID',
+          'shipToAddress', 'shipToCity', 'shipToName', 'shipToSID',
+          'pkgs', 'weight', 'shipperInfo'
+        ];
+        fields.forEach(field => {
+          const value = document.getElementById(field).value;
+          if (form.getTextField(field)) {
+            form.getTextField(field).setText(value);
+          }
+        });
+
+        // Динамічні текстові поля (2-8)
+        for (let i = 2; i <= 8; i++) {
+          ['weight', 'pkgs', 'shipperInfo'].forEach(field => {
+            const fieldName = `${field}${i}`;
+            const value = document.getElementById(fieldName).value;
+            if (form.getTextField(fieldName)) {
+              form.getTextField(fieldName).setText(value);
+            }
+          });
+        }
+
+        // Збереження оновленого PDF
+        const pdfBytes = await pdfDoc.save();
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+
+        // Завантаження PDF
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'Filled_BOL.pdf';
+        link.click();
+      });
+    });
+  </script>
+</body>
+</html>
