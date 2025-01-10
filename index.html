@@ -117,13 +117,16 @@
 </head>
 <body>
   <h1>Заповнення Бланка</h1>
-  <form id="form">
+  <form id="form"> 
     <label>Bill of Lading Number:</label>
     <input type="text" id="billLadingNumber" placeholder="Enter bill of lading number"><br>
     <label>Carrier Name:</label>
     <input type="text" id="carrierName" placeholder="Enter carrier name"><br>
     <label>SCAC:</label>
     <input type="text" id="scac" placeholder="Enter SCAC"><br>
+    <h3>Date:</h3>
+    <label>Date:</label>
+    <input type="date" id="date" placeholder="Enter date"><br>
     <h3>Ship From:</h3>
     <label>Address:</label>
     <input type="text" id="shipFromAddress" placeholder="Enter address"><br>
@@ -194,7 +197,7 @@
         const form = pdfDoc.getForm();
 
         const fields = [
-          'shipFromAddress', 'shipFromCity', 'shipFromName', 'shipFromSID',
+          'date', 'shipFromAddress', 'shipFromCity', 'shipFromName', 'shipFromSID',
           'shipToAddress', 'shipToCity', 'shipToName', 'shipToSID',
           'pkgs', 'weight', 'shipperInfo', 'billLadingNumber',
           'carrierName', 'scac'
