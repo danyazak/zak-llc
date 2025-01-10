@@ -35,6 +35,12 @@
     <input type="text" id="weight" placeholder="Enter weight"><br>
     <label>Shipper Information:</label>
     <input type="text" id="shipperInfo" placeholder="Enter shipper info"><br>
+    <label>Bill of Lading Number:</label>
+    <input type="text" id="billLadingNumber" placeholder="Enter bill of lading number"><br>
+    <label>Carrier Name:</label>
+    <input type="text" id="carrierName" placeholder="Enter carrier name"><br>
+    <label>SCAC:</label>
+    <input type="text" id="scac" placeholder="Enter SCAC"><br>
 
     <h3>Weight, PKGS, and Shipper Info:</h3>
     <div id="dynamicFields">
@@ -80,7 +86,8 @@
         const fields = [
           'shipFromAddress', 'shipFromCity', 'shipFromName', 'shipFromSID',
           'shipToAddress', 'shipToCity', 'shipToName', 'shipToSID',
-          'pkgs', 'weight', 'shipperInfo'
+          'pkgs', 'weight', 'shipperInfo', 'billLadingNumber',
+          'carrierName', 'scac'
         ];
 
         // Заповнення основних полів
