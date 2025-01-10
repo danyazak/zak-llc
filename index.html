@@ -36,10 +36,11 @@
     <label>Shipper Information:</label>
     <input type="text" id="shipperInfo" placeholder="Enter shipper info"><br>
 
-    <h3>Weight, PKGS, and Shipper Info (2-8):</h3>
+    <h3>Weight, PKGS, and Shipper Info:</h3>
     <div id="dynamicFields">
-      <!-- Динамічні поля -->
+      <!-- Динамічні поля будуть додані тут -->
     </div>
+    <button type="button" id="addField">Add Shipper Info</button><br><br>
 
     <button type="button" id="generate">Генерувати PDF</button>
   </form>
@@ -47,68 +48,63 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // URL шаблона PDF
-      const templateUrl = 'template.pdf';
-
-      // Динамічне створення полів weight, pkgs, shipperInfo від 2 до 8
       const dynamicFieldsContainer = document.getElementById('dynamicFields');
-      for (let i = 2; i <= 8; i++) {
-        dynamicFieldsContainer.innerHTML += `
-          <label>Weight ${i}:</label>
-          <input type="text" id="weight${i}" placeholder="Enter weight ${i}"><br>
-          <label>PKGS ${i}:</label>
-          <input type="text" id="pkgs${i}" placeholder="Enter PKGS ${i}"><br>
-          <label>Shipper Info ${i}:</label>
-          <input type="text" id="shipperInfo${i}" placeholder="Enter Shipper Info ${i}"><br>
-        `;
-      }
+      const addFieldButton = document.getElementById('addField');
+      let counter = 2; // Лічильник для додавання нових полів
+
+      // Додавання нових полів за кнопкою
+      addFieldButton.addEventListener('click', () => {
+        if (counter <= 8) {
+          const fieldSet = document.createElement('div');
+          fieldSet.innerHTML = `
+            <label>Weight ${counter}:</label>
+            <input type="text" id="weight${counter}" placeholder="Enter weight ${counter}"><br>
+            <label>PKGS ${counter}:</label>
+            <input type="text" id="pkgs${counter}" placeholder="Enter PKGS ${counter}"><br>
+            <label>Shipper Info ${counter}:</label>
+            <input type="text" id="shipperInfo${counter}" placeholder="Enter Shipper Info ${counter}"><br>
+          `;
+          dynamicFieldsContainer.appendChild(fieldSet);
+          counter++;
+        } else {
+          alert('Maximum 8 fields allowed.');
+        }
+      });
 
       document.getElementById('generate').addEventListener('click', async () => {
-        // Завантаження PDF-шаблона з GitHub Pages
+        const templateUrl = 'template.pdf'; // Замініть на правильний шлях до шаблона
         const arrayBuffer = await fetch(templateUrl).then(res => res.arrayBuffer());
-
-        // Завантаження PDF у PDF-Lib
         const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
         const form = pdfDoc.getForm();
 
-        // Основні текстові поля
         const fields = [
-          'shipFromAddress',
-          'shipFromCity',
-          'shipFromName',
-          'shipFromSID',
-          'shipToAddress',
-          'shipToCity',
-          'shipToName',
-          'shipToSID',
-          'pkgs',
-          'weight',
-          'shipperInfo'
+          'shipFromAddress', 'shipFromCity', 'shipFromName', 'shipFromSID',
+          'shipToAddress', 'shipToCity', 'shipToName', 'shipToSID',
+          'pkgs', 'weight', 'shipperInfo'
         ];
+
+        // Заповнення основних полів
         fields.forEach(field => {
-          const value = document.getElementById(field).value;
+          const value = document.getElementById(field)?.value || '';
           if (form.getTextField(field)) {
             form.getTextField(field).setText(value);
           }
         });
 
-        // Динамічні текстові поля (2-8)
-        for (let i = 2; i <= 8; i++) {
+        // Заповнення динамічних полів
+        for (let i = 2; i < counter; i++) {
           ['weight', 'pkgs', 'shipperInfo'].forEach(field => {
             const fieldName = `${field}${i}`;
-            const value = document.getElementById(fieldName).value;
+            const value = document.getElementById(fieldName)?.value || '';
             if (form.getTextField(fieldName)) {
               form.getTextField(fieldName).setText(value);
             }
           });
         }
 
-        // Збереження оновленого PDF
         const pdfBytes = await pdfDoc.save();
         const blob = new Blob([pdfBytes], { type: 'application/pdf' });
         const url = URL.createObjectURL(blob);
-
-        // Завантаження PDF
         const link = document.createElement('a');
         link.href = url;
         link.download = 'Filled_BOL.pdf';
