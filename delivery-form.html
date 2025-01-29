@@ -214,17 +214,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
     <script>
         document.getElementById('generate').addEventListener('click', async () => {
-    const templateUrl = 'DELIVERYFORM.pdf'; // Замініть на правильний шлях до шаблона
+    const templateUrl = 'DELIVERYFORM.pdf'; // шлях до шаблона
     const arrayBuffer = await fetch(templateUrl).then(res => res.arrayBuffer());
-    // Завантаження PDF з сервера
-    const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+   const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
     const form = pdfDoc.getForm();
-     // Зміни шлях до розміщеного на сервері PDF
-    }
-
-    
-
     pdfDoc.getForm().acroForm.dict.set(PDFLib.PDFName.of('NeedAppearances'), PDFLib.PDFBool.True);
+    }
 
     function formatDate(dateString) {
         if (!dateString) return "";
