@@ -223,7 +223,6 @@
     const arrayBuffer = await response.arrayBuffer();
     }
 
-
     const file = fileInput.files[0];
     const arrayBuffer = await file.arrayBuffer();
     const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
