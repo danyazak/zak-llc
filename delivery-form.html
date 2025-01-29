@@ -217,7 +217,6 @@
     const pdfUrl = '/DELIVERYFORM.pdf'; // Зміни шлях до розміщеного на сервері PDF
     const response = await fetch(pdfUrl);
     
-    const arrayBuffer = await response.arrayBuffer();
     const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
     const form = pdfDoc.getForm();
     const arrayBuffer = await response.arrayBuffer();
