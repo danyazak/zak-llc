@@ -216,10 +216,10 @@
         document.getElementById('generate').addEventListener('click', async () => {
     const templateUrl = 'DELIVERYFORM.pdf'; // Замініть на правильний шлях до шаблона
     const arrayBuffer = await fetch(templateUrl).then(res => res.arrayBuffer());
+    // Завантаження PDF з сервера
     const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
     const form = pdfDoc.getForm();
-    const pdfUrl = 'DELIVERYFORMm.pdf'; // Зміни шлях до розміщеного на сервері PDF
-    const response = await fetch(pdfUrl);
+     // Зміни шлях до розміщеного на сервері PDF
     
     
     
