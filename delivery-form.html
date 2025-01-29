@@ -214,7 +214,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
     <script>
         document.getElementById('generate').addEventListener('click', async () => {
-    const pdfUrl = 'DELIVERYFORM.pdf'; // Зміни шлях до розміщеного на сервері PDF
+    const pdfUrl = 'https://zak-llc.online/DELIVERYFORM.pdf'; // Зміни шлях до розміщеного на сервері PDF
     const response = await fetch(pdfUrl);
     const arrayBuffer = await response.arrayBuffer();
     }
