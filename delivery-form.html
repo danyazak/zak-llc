@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delivery Form</title>
+  <style>
+    /* Базові стилі */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      background-color: #333;
+      color: #fff;
+      padding: 20px 0;
+      font-size: 2rem;
+      margin: 0;
+    }
+
+    form {
+      max-width: 800px;
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h3 {
+      margin-top: 20px;
+      color: #555;
+      font-size: 1.3rem;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin: 10px 0 5px;
+    }
+
+    input[type="text"] {
+      width: 95%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+     
+    #date {
+      width: 38%;
+      min-height: 35px;
+      border-radius: 5px;
+    }
+     
+    button {
+      display: block;
+      width: 100%;
+      background-color: #007bff;
+      color: white;
+      padding: 10px 15px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #addField, #addFuelField, #addExpensesField  {
+      background-color: #28a745;
+    }
+
+    #addFuelField:hover {
+      background-color: #218838;
+    }
+
+    #addField:hover {
+      background-color: #218838;
+    }
+
+    #addExpensesField:hover {
+      background-color: #218838;
+    }
+
+    /* Декоративні елементи */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-size: cover;
+      background-position: center;
+      z-index: -1;
+      filter: brightness(0.7);
+    }
+
+    /* Адаптивність */
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      form {
+        width: 90%;
+        padding: 15px;
+      }
+
+      button {
+        font-size: 0.9rem;
+      }
+
+      input[type="text"] {
+        padding: 8px;
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+    <h1>Delivery Form</h1>
+    <form id="form">
+      <label>Company Name:</label>
+      <input type="text" id="companyName" placeholder="Enter company name"><br>
+      <label>Driver Name:</label>
+      <input type="text" id="driverName" placeholder="Enter driver name"><br>
+      <label>Truck #:</label>
+      <input type="text" id="truckNumber" placeholder="Enter truck number"><br>
+      <label>Trailer #:</label>
+      <input type="text" id="trailerNumber" placeholder="Enter trailer number"><br>
+  
+      <label>Date From:</label>
+      <input type="date" id="dateFrom"><br>
+      <label>Date To:</label>
+      <input type="date" id="dateTo"><br>
+  
+      <div id="dynamicFields">
+        <label>Pick Up Date:</label>
+        <input type="date" id="pickUpDate1"><br>
+        <label>City/State From:</label>
+        <input type="text" id="cityStateFrom1" placeholder="Enter city and state"><br>
+        <label>Delivery Date:</label>
+        <input type="date" id="deliveryDate1"><br>
+        <label>City/State To:</label>
+        <input type="text" id="cityStateTo1" placeholder="Enter city and state"><br>
+      </div>
+  
+      <button type="button" id="addField">Add More Fields</button><br><br>
+  
+      
+      <div id="fuelFields">
+        <label>Mileage:</label>
+        <input type="number" id="mileageRefueling1" placeholder="Enter mileage"><br>
+        <label>Date:</label>
+        <input type="date" id="dateRefueling1"><br>
+        <label>State:</label>
+        <input type="text" id="stateRefueling1" placeholder="Enter state"><br>
+        <label>Price:</label>
+        <input type="number" id="priceRefueling1" placeholder="Enter price"><br>
+        <label>Fuel Gallons:</label>
+        <input type="number" id="fuelGallons1" placeholder="Enter fuel gallons"><br>
+        <label>Fuel Amount:</label>
+        <input type="number" id="fuelAmount1" placeholder="Enter fuel amount"><br>
+        <label>DEF Gallons:</label>
+        <input type="number" id="defGallons1" placeholder="Enter DEF gallons"><br>
+        <label>DEF Amount:</label>
+        <input type="number" id="defAmount1" placeholder="Enter DEF amount"><br>
+      </div>
+      
+      <button type="button" id="addFuelField">Add More Fuel Fields</button><br><br>
+  
+      <div id="expensesFields">
+        <label>Tolls Date:</label>
+        <input type="date" id="tollsDate1"><br>
+        <label>Tolls Amount:</label>
+        <input type="number" id="tollsAmount1" placeholder="Enter tolls amount"><br>
+        <label>Scales Date:</label>
+        <input type="date" id="scalesDate1"><br>
+        <label>Scales Amount:</label>
+        <input type="number" id="scalesAmount1" placeholder="Enter scales amount"><br>
+        <label>Repairs Date:</label>
+        <input type="date" id="repairsDate1"><br>
+        <label>Repairs Amount:</label>
+        <input type="number" id="repairsAmount1" placeholder="Enter repairs amount"><br>
+        <label>Repairs Description:</label>
+        <input type="text" id="repairsDescription1" placeholder="Enter repairs description"><br>
+      </div>
+      
+      <button type="button" id="addExpensesField">Add More Expenses Fields</button><br><br>
+
+      <label>Cash Advance Date:</label>
+      <input type="date" id="cashAdvanceDate"><br>
+      <label>Cash Advance Amount:</label>
+      <input type="number" id="cashAdvanceAmount" placeholder="Enter cash advance amount"><br>
+      <label>Cash Advance State:</label>
+      <input type="text" id="cashAdvanceState" placeholder="Enter state"><br>
+  
+
+  
+      <button type="button" id="generate">Generate PDF</button>
+    </form>
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script>
+        document.getElementById('generate').addEventListener('click', async () => {
+    const pdfUrl = 'DELIVERYFORM.pdf'; // Зміни шлях до розміщеного на сервері PDF
+    const response = await fetch(pdfUrl);
+    const arrayBuffer = await response.arrayBuffer();
+    }
+
+    const file = fileInput.files[0];
+    const arrayBuffer = await file.arrayBuffer();
+    const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+    const form = pdfDoc.getForm();
+
+    pdfDoc.getForm().acroForm.dict.set(PDFLib.PDFName.of('NeedAppearances'), PDFLib.PDFBool.True);
+
+    function formatDate(dateString) {
+        if (!dateString) return "";
+        const [year, month, day] = dateString.split("-");
+        return `${month}/${day}/${year}`;
+    }
+
+    const fields = [
+        'companyName', 'driverName', 'truckNumber', 'trailerNumber', 'dateFrom', 'dateTo',
+        'cashAdvanceDate1', 'cashAdvanceAmount1', 'cashAdvanceState1',
+        'pickUpDate1', 'pickUpDate2', 'pickUpDate3', 'pickUpDate4', 'pickUpDate5', 'pickUpDate6', 'pickUpDate7', 'pickUpDate8', 'pickUpDate9',
+        'cityStateFrom1', 'cityStateFrom2', 'cityStateFrom3', 'cityStateFrom4', 'cityStateFrom5', 'cityStateFrom6', 'cityStateFrom7', 'cityStateFrom8', 'cityStateFrom9',
+        'deliveryDate1', 'deliveryDate2', 'deliveryDate3', 'deliveryDate4', 'deliveryDate5', 'deliveryDate6', 'deliveryDate7', 'deliveryDate8', 'deliveryDate9',
+        'cityStateTo1', 'cityStateTo2', 'cityStateTo3', 'cityStateTo4', 'cityStateTo5', 'cityStateTo6', 'cityStateTo7', 'cityStateTo8', 'cityStateTo9',
+        'mileageRefueling1', 'mileageRefueling2', 'mileageRefueling3', 'mileageRefueling4', 'mileageRefueling5', 'mileageRefueling6',
+        'dateRefueling1', 'dateRefueling2', 'dateRefueling3', 'dateRefueling4', 'dateRefueling5', 'dateRefueling6',
+        'stateRefueling1', 'stateRefueling2', 'stateRefueling3', 'stateRefueling4', 'stateRefueling5', 'stateRefueling6',
+        'priceRefueling1', 'priceRefueling2', 'priceRefueling3', 'priceRefueling4', 'priceRefueling5', 'priceRefueling6',
+        'fuelGallons1', 'fuelGallons2', 'fuelGallons3', 'fuelGallons4', 'fuelGallons5', 'fuelGallons6',
+        'fuelAmount1', 'fuelAmount2', 'fuelAmount3', 'fuelAmount4', 'fuelAmount5', 'fuelAmount6',
+        'defGallons1', 'defGallons2', 'defGallons3', 'defGallons4', 'defGallons5', 'defGallons6',
+        'defAmount1', 'defAmount2', 'defAmount3', 'defAmount4', 'defAmount5', 'defAmount6',
+        'tollsDate1', 'tollsDate2', 'tollsDate3', 'tollsDate4', 'tollsDate5',
+        'tollsAmount1', 'tollsAmount2', 'tollsAmount3', 'tollsAmount4', 'tollsAmount5',
+        'scalesDate1', 'scalesDate2', 'scalesDate3', 'scalesDate4', 'scalesDate5',
+        'scalesAmount1', 'scalesAmount2', 'scalesAmount3', 'scalesAmount4', 'scalesAmount5',
+        'repairsDate1', 'repairsDate2', 'repairsDate3', 'repairsDate4', 'repairsDate5',
+        'repairsAmount1', 'repairsAmount2', 'repairsAmount3', 'repairsAmount4', 'repairsAmount5',
+        'repairsDescription1', 'repairsDescription2', 'repairsDescription3', 'repairsDescription4', 'repairsDescription5'
+        ];
+
+        fields.forEach(field => {
+        if (field === 'companyName') {
+            document.getElementById(field).value = document.getElementById(field)?.value || '';
+        }
+        const value = document.getElementById(field)?.value || '';
+        const formattedValue = field.includes("Date") ? formatDate(value) : value;
+
+        if (form.getTextField(field)) {
+            form.getTextField(field).setAlignment(PDFLib.TextAlignment.Center);
+            form.getTextField(field).setText(formattedValue);
+            console.log(`Field "${field}" set to "${formattedValue}"`);
+        }
+    });
+
+for (let i = 1; i <= 9; i++) {
+    ['pickUpDate', 'cityStateFrom', 'deliveryDate', 'cityStateTo'].forEach(field => {
+        const fieldName = `${field}${i}`;
+        const value = document.getElementById(fieldName)?.value || '';
+
+        if (form.getTextField(fieldName)) {
+            form.getTextField(fieldName).setText(value);
+            console.log(`Field "${fieldName}" set to "${value}"`);
+        }
+    });
+}
+
+pdfDoc.getForm().updateFieldAppearances();
+const pdfBytes = await pdfDoc.save();
+const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+const url = URL.createObjectURL(blob);
+const link = document.createElement('a');
+link.href = url;
+link.download = 'Filled_DELIVERY_FORM.pdf';
+link.click();
+});
+
+
+
+  
+    document.getElementById('addFuelField').addEventListener('click', () => {
+      const fuelFields = document.getElementById('fuelFields');
+      const fieldCount = document.querySelectorAll('#fuelFields div').length + 1;
+
+      if (fieldCount > 6) {
+        alert('You can only add up to 6 sets of fuel fields.');
+        return;
+      }
+
+      const fieldSet = document.createElement('div');
+      fieldSet.innerHTML = `
+        <label>Mileage:</label>
+        <input type="number" id="mileageRefueling${fieldCount}" placeholder="Enter mileage"><br>
+        <label>Date:</label>
+        <input type="date" id="dateRefueling${fieldCount}"><br>
+        <label>State:</label>
+        <input type="text" id="stateRefueling${fieldCount}" placeholder="Enter state"><br>
+        <label>Price:</label>
+        <input type="number" id="priceRefueling${fieldCount}" placeholder="Enter price"><br>
+        <label>Fuel Gallons:</label>
+        <input type="number" id="fuelGallons${fieldCount}" placeholder="Enter fuel gallons"><br>
+        <label>Fuel Amount:</label>
+        <input type="number" id="fuelAmount${fieldCount}" placeholder="Enter fuel amount"><br>
+        <label>DEF Gallons:</label>
+        <input type="number" id="defGallons${fieldCount}" placeholder="Enter DEF gallons"><br>
+        <label>DEF Amount:</label>
+        <input type="number" id="defAmount${fieldCount}" placeholder="Enter DEF amount"><br>
+      `;
+      fuelFields.appendChild(fieldSet);
+    });
+
+    document.getElementById('addExpensesField').addEventListener('click', () => {
+      const expensesFields = document.getElementById('expensesFields');
+      const fieldCount = document.querySelectorAll('#expensesFields div').length + 1;
+
+      if (fieldCount > 5) {
+        alert('You can only add up to 5 sets of expenses fields.');
+        return;
+      }
+
+      const fieldSet = document.createElement('div');
+      fieldSet.innerHTML = `
+        <label>Tolls Date:</label>
+        <input type="date" id="tollsDate${fieldCount}"><br>
+        <label>Tolls Amount:</label>
+        <input type="number" id="tollsAmount${fieldCount}" placeholder="Enter tolls amount"><br>
+        <label>Scales Date:</label>
+        <input type="date" id="scalesDate${fieldCount}"><br>
+        <label>Scales Amount:</label>
+        <input type="number" id="scalesAmount${fieldCount}" placeholder="Enter scales amount"><br>
+        <label>Repairs Date:</label>
+        <input type="date" id="repairsDate${fieldCount}"><br>
+        <label>Repairs Amount:</label>
+        <input type="number" id="repairsAmount${fieldCount}" placeholder="Enter repairs amount"><br>
+        <label>Repairs Description:</label>
+        <input type="text" id="repairsDescription${fieldCount}" placeholder="Enter repairs description"><br>
+      `;
+      expensesFields.appendChild(fieldSet);
+    });
+
+
+    
+        document.getElementById('addField').addEventListener('click', () => {
+          const dynamicFields = document.getElementById('dynamicFields');
+          const fieldCount = document.querySelectorAll('#dynamicFields div').length + 1; // Додаємо новий набір
+      
+          if (fieldCount > 9) {
+            alert('You can only add up to 9 sets of fields.');
+            return;
+          }
+      
+          const fieldSet = document.createElement('div');
+          fieldSet.innerHTML = `
+            <label>Pick Up Date:</label>
+            <input type="date" id="pickUpDate${fieldCount}"><br>
+            <label>City/State From:</label>
+            <input type="text" id="cityStateFrom${fieldCount}" placeholder="Enter city and state"><br>
+            <label>Delivery Date:</label>
+            <input type="date" id="deliveryDate${fieldCount}"><br>
+            <label>City/State To:</label>
+            <input type="text" id="cityStateTo${fieldCount}" placeholder="Enter city and state"><br>
+          `;
+          dynamicFields.appendChild(fieldSet);
+        });
+      </script>
+      
+  </body>
+  </html>
+  
