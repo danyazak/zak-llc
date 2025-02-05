@@ -6,6 +6,7 @@
   <title>Delivery Form</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
   <style>
     /* Базові стилі */
     body {
@@ -380,7 +381,8 @@ link.click();
           `;
           dynamicFields.appendChild(fieldSet);
         });
-      document.getElementById('generateQR').addEventListener('click', () => {
+//-------
+document.getElementById('generateQR').addEventListener('click', () => {
     const fields = [
         'companyName', 'driverName', 'truckNumber', 'trailerNumber', 'dateFrom', 'dateTo',
         'cashAdvanceDate1', 'cashAdvanceAmount1', 'cashAdvanceState1',
@@ -411,16 +413,17 @@ link.click();
     });
 
     const jsonData = JSON.stringify(formData);
-    document.getElementById('qrcode').innerHTML = ''; // Очистити попередній QR
+    const compressedData = LZString.compressToBase64(jsonData);  // Стиснення даних
 
+    document.getElementById('qrcode').innerHTML = '';
     new QRCode(document.getElementById('qrcode'), {
-        text: jsonData,
+        text: compressedData,
         width: 200,
         height: 200
     });
 });
-
-      document.getElementById('scanQR').addEventListener('click', () => {
+//---------------------------------------------
+document.getElementById('scanQR').addEventListener('click', () => {
     document.getElementById('reader').style.display = 'block';
 
     const html5QrCode = new Html5Qrcode("reader");
@@ -431,7 +434,8 @@ link.click();
         config,
         (decodedText) => {
             try {
-                const formData = JSON.parse(decodedText);
+                const decompressedData = LZString.decompressFromBase64(decodedText); // Розпакування даних
+                const formData = JSON.parse(decompressedData);
 
                 Object.keys(formData).forEach(key => {
                     if (document.getElementById(key)) {
@@ -439,7 +443,7 @@ link.click();
                     }
                 });
 
-                html5QrCode.stop(); // Зупинити сканування після успішного зчитування
+                html5QrCode.stop();
                 document.getElementById('reader').style.display = 'none';
             } catch (error) {
                 console.error("Invalid QR code data:", error);
