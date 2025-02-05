@@ -461,39 +461,57 @@ document.getElementById('scanQR').addEventListener('click', () => {
 
     const html5QrCode = new Html5Qrcode("reader");
     const scanStatus = document.getElementById('scanStatus');
-    let attempts = 0; 
+    let attempts = 0;
+
+    const config = {
+        fps: 5,                // Зменшено кількість кадрів для кращої стабільності
+        qrbox: { width: 350, height: 350 },  // Збільшена зона сканування
+        aspectRatio: 1.0,
+        disableFlip: false     // Важливо для роботи з різними типами камер
+    };
+
+    function handleSuccess(decodedText) {
+        attempts++;
+        scanStatus.textContent = `QR code scanned successfully after ${attempts} attempt(s)!`;
+        scanStatus.style.color = 'green';
+
+        try {
+            const decompressedData = LZString.decompressFromEncodedURIComponent(decodedText);
+            const formData = JSON.parse(decompressedData);
+
+            Object.keys(formData).forEach(key => {
+                if (document.getElementById(key)) {
+                    document.getElementById(key).value = formData[key];
+                }
+            });
+
+            html5QrCode.stop();
+            document.getElementById('reader').style.display = 'none';
+        } catch (error) {
+            console.error("Invalid QR code data:", error);
+            scanStatus.textContent = 'Error parsing QR code data.';
+            scanStatus.style.color = 'red';
+        }
+    }
+
+    function handleError(errorMessage) {
+        attempts++;
+        scanStatus.textContent = `Scan attempt ${attempts} failed. Retrying...`;
+        scanStatus.style.color = 'orange';
+
+        console.warn(`Scan attempt ${attempts} failed:`, errorMessage);
+    }
 
     html5QrCode.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: 300 },
-        (decodedText) => {
-            attempts++;
-            scanStatus.textContent = `QR code scanned successfully after ${attempts} attempt(s)!`;
-            scanStatus.style.color = 'green';
-
-            try {
-                const decompressedData = LZString.decompressFromEncodedURIComponent(decodedText);
-                const formData = JSON.parse(decompressedData);
-
-                Object.keys(formData).forEach(key => {
-                    if (document.getElementById(key)) {
-                        document.getElementById(key).value = formData[key];
-                    }
-                });
-
-                html5QrCode.stop();
-                document.getElementById('reader').style.display = 'none';
-            } catch (error) {
-                console.error("Invalid QR code data:", error);
-            }
-        },
-        (errorMessage) => {
-            attempts++;
-            scanStatus.textContent = `Scan attempt ${attempts} failed. Retrying...`;
-            scanStatus.style.color = 'orange';
-            console.warn("QR code scan error:", errorMessage);
-        }
-    );
+        config,
+        handleSuccess,
+        handleError
+    ).catch(err => {
+        console.error('Error starting the scanner:', err);
+        scanStatus.textContent = 'Error initializing camera!';
+        scanStatus.style.color = 'red';
+    });
 });
 
       </script>
