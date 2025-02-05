@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Delivery Form</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
@@ -135,9 +136,13 @@
     <h1>Delivery Form</h1>
   
     <form id="form">
-      <button type="button" id="scanQR">Scan QR Code</button>
-      <p id="scanStatus" style="text-align: center; font-weight: bold; color: blue;"></p>
+      <button type="button" id="scanQR">Scan QR Code (Live)</button>
+<button type="button" id="uploadImage">Upload QR Code Image</button>
+<input type="file" id="fileInput" accept="image/*" style="display: none;">
+<p id="scanStatus" style="text-align: center; font-weight: bold; color: blue;"></p>
 <div id="reader" style="width: 300px; margin: 20px auto; display: none;"></div>
+<canvas id="imageCanvas" style="display: none;"></canvas>
+
 
       <label>Company Name:</label>
       <input type="text" id="companyName" placeholder="Enter company name"><br>
@@ -464,14 +469,14 @@ document.getElementById('scanQR').addEventListener('click', () => {
     let attempts = 0;
 
     const config = {
-        fps: 2, // Зменшена кількість кадрів для підвищення точності
-        qrbox: { width: 400, height: 400 }, // Збільшена зона сканування
+        fps: 2,
+        qrbox: { width: 400, height: 400 },
         aspectRatio: 1.0,
-        disableFlip: true, // Вимкнення горизонтального відображення для стабільності
-        experimentalFeatures: { useBarCodeDetectorIfSupported: true } // Використання нативного детектора
+        disableFlip: true,
+        experimentalFeatures: { useBarCodeDetectorIfSupported: true }
     };
 
-    const handleSuccess = (decodedText) => {
+    function handleSuccess(decodedText) {
         attempts++;
         scanStatus.textContent = `QR code scanned successfully after ${attempts} attempt(s)!`;
         scanStatus.style.color = 'green';
@@ -493,15 +498,15 @@ document.getElementById('scanQR').addEventListener('click', () => {
             scanStatus.textContent = 'Error parsing QR code data.';
             scanStatus.style.color = 'red';
         }
-    };
+    }
 
-    const handleError = (errorMessage) => {
+    function handleError(errorMessage) {
         attempts++;
         scanStatus.textContent = `Scan attempt ${attempts} failed. Retrying...`;
         scanStatus.style.color = 'orange';
 
         console.warn(`Scan attempt ${attempts} failed:`, errorMessage);
-    };
+    }
 
     html5QrCode.start(
         { facingMode: "environment" },
@@ -515,6 +520,55 @@ document.getElementById('scanQR').addEventListener('click', () => {
     });
 });
 
+document.getElementById('uploadImage').addEventListener('click', () => {
+    document.getElementById('fileInput').click();
+});
+
+document.getElementById('fileInput').addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = function () {
+            const canvas = document.getElementById('imageCanvas');
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+            try {
+                const qrCodeResult = jsQR(imageData.data, canvas.width, canvas.height);
+                if (qrCodeResult) {
+                    const decompressedData = LZString.decompressFromEncodedURIComponent(qrCodeResult.data);
+                    const formData = JSON.parse(decompressedData);
+
+                    Object.keys(formData).forEach(key => {
+                        if (document.getElementById(key)) {
+                            document.getElementById(key).value = formData[key];
+                        }
+                    });
+
+                    document.getElementById('scanStatus').textContent = 'QR code scanned successfully from image!';
+                    document.getElementById('scanStatus').style.color = 'green';
+                } else {
+                    document.getElementById('scanStatus').textContent = 'Failed to detect QR code in the image.';
+                    document.getElementById('scanStatus').style.color = 'red';
+                }
+            } catch (error) {
+                console.error('Error reading QR code from image:', error);
+                document.getElementById('scanStatus').textContent = 'Error parsing QR code from image.';
+                document.getElementById('scanStatus').style.color = 'red';
+            }
+        };
+    };
+    reader.readAsDataURL(file);
+});
 
       </script>
       
