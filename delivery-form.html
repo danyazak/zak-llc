@@ -464,13 +464,14 @@ document.getElementById('scanQR').addEventListener('click', () => {
     let attempts = 0;
 
     const config = {
-        fps: 5,                // Зменшено кількість кадрів для кращої стабільності
-        qrbox: { width: 350, height: 350 },  // Збільшена зона сканування
+        fps: 2, // Зменшена кількість кадрів для підвищення точності
+        qrbox: { width: 400, height: 400 }, // Збільшена зона сканування
         aspectRatio: 1.0,
-        disableFlip: false     // Важливо для роботи з різними типами камер
+        disableFlip: true, // Вимкнення горизонтального відображення для стабільності
+        experimentalFeatures: { useBarCodeDetectorIfSupported: true } // Використання нативного детектора
     };
 
-    function handleSuccess(decodedText) {
+    const handleSuccess = (decodedText) => {
         attempts++;
         scanStatus.textContent = `QR code scanned successfully after ${attempts} attempt(s)!`;
         scanStatus.style.color = 'green';
@@ -488,19 +489,19 @@ document.getElementById('scanQR').addEventListener('click', () => {
             html5QrCode.stop();
             document.getElementById('reader').style.display = 'none';
         } catch (error) {
-            console.error("Invalid QR code data:", error);
+            console.error("Error parsing QR code data:", error);
             scanStatus.textContent = 'Error parsing QR code data.';
             scanStatus.style.color = 'red';
         }
-    }
+    };
 
-    function handleError(errorMessage) {
+    const handleError = (errorMessage) => {
         attempts++;
         scanStatus.textContent = `Scan attempt ${attempts} failed. Retrying...`;
         scanStatus.style.color = 'orange';
 
         console.warn(`Scan attempt ${attempts} failed:`, errorMessage);
-    }
+    };
 
     html5QrCode.start(
         { facingMode: "environment" },
@@ -508,11 +509,12 @@ document.getElementById('scanQR').addEventListener('click', () => {
         handleSuccess,
         handleError
     ).catch(err => {
-        console.error('Error starting the scanner:', err);
+        console.error('Error initializing scanner:', err);
         scanStatus.textContent = 'Error initializing camera!';
         scanStatus.style.color = 'red';
     });
 });
+
 
       </script>
       
