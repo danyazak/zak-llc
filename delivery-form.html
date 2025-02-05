@@ -215,7 +215,7 @@
   
       <button type="button" id="generate">Generate PDF</button>
       <button type="button" id="generateQR">Generate QR Code</button>
-<div id="qrcode" style="margin: 20px auto; width: 200px; height: 200px;"></div>
+<canvas id="qrcode" style="margin: 20px auto; display: block;"></canvas>
 
 
     </form>
@@ -381,7 +381,7 @@ link.click();
           `;
           dynamicFields.appendChild(fieldSet);
         });
-//-------
+//Генерація QR коду 
 document.getElementById('generateQR').addEventListener('click', () => {
     const fields = [
         'companyName', 'driverName', 'truckNumber', 'trailerNumber', 'dateFrom', 'dateTo',
@@ -415,11 +415,10 @@ document.getElementById('generateQR').addEventListener('click', () => {
     const jsonData = JSON.stringify(formData);
     const compressedData = LZString.compressToBase64(jsonData); // Стиснення даних
 
-    const qrContainer = document.getElementById('qrcode');
-    qrContainer.innerHTML = ''; // Очищення контейнера перед генерацією
+    const canvas = document.getElementById('qrcode');
 
     try {
-        QRCode.toCanvas(qrContainer, compressedData, { width: 256 }, (error) => {
+        QRCode.toCanvas(canvas, compressedData, { width: 256 }, (error) => {
             if (error) {
                 console.error('QR code generation error:', error);
             } else {
@@ -431,7 +430,8 @@ document.getElementById('generateQR').addEventListener('click', () => {
     }
 });
 
-//---------------------------------------------
+
+// Сканування QR коду
 document.getElementById('scanQR').addEventListener('click', () => {
     document.getElementById('reader').style.display = 'block';
 
