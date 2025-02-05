@@ -136,12 +136,11 @@
     <h1>Delivery Form</h1>
   
     <form id="form">
-      <button type="button" id="scanQR">Scan QR Code (Live)</button>
-<button type="button" id="uploadImage">Upload QR Code Image</button>
-<input type="file" id="fileInput" accept="image/*" style="display: none;">
-<p id="scanStatus" style="text-align: center; font-weight: bold; color: blue;"></p>
-<div id="reader" style="width: 300px; margin: 20px auto; display: none;"></div>
-<canvas id="imageCanvas" style="display: none;"></canvas>
+    <button type="button" id="scanQR">Scan QR Code</button>
+    <button type="button" id="generateQR">Generate QR Code</button>
+    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+    <p id="scanStatus"></p>
+    <canvas id="qrcode"></canvas>
 
 
       <label>Company Name:</label>
@@ -217,18 +216,8 @@
       <label>Cash Advance Amount:</label>
       <input type="number" id="cashAdvanceAmount" placeholder="Enter cash advance amount"><br>
       <label>Cash Advance State:</label>
-      <input type="text" id="cashAdvanceState" placeholder="Enter state"><br>
-  
-
-  
+      <input type="text" id="cashAdvanceState" placeholder="Enter state"><br>  
       <button type="button" id="generate">Generate PDF</button>
-      <button type="button" id="generateQR">Generate QR Code</button>
-<p id="qrStatus" style="text-align: center; font-weight: bold; color: green;"></p>
-<p id="dataSize" style="text-align: center; font-style: italic;"></p>
-<canvas id="qrcode" style="margin: 20px auto; display: block;"></canvas>
-
-
-
     </form>
   
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -393,184 +382,54 @@ link.click();
           dynamicFields.appendChild(fieldSet);
         });
 //Генерація QR коду 
-document.getElementById('generateQR').addEventListener('click', () => {
-    const fields = [
-        'companyName', 'driverName', 'truckNumber', 'trailerNumber', 'dateFrom', 'dateTo',
-        'cashAdvanceDate1', 'cashAdvanceAmount1', 'cashAdvanceState1',
-        ...Array.from({ length: 9 }, (_, i) => `pickUpDate${i + 1}`),
-        ...Array.from({ length: 9 }, (_, i) => `cityStateFrom${i + 1}`),
-        ...Array.from({ length: 9 }, (_, i) => `deliveryDate${i + 1}`),
-        ...Array.from({ length: 9 }, (_, i) => `cityStateTo${i + 1}`),
-        ...Array.from({ length: 6 }, (_, i) => `mileageRefueling${i + 1}`),
-        ...Array.from({ length: 6 }, (_, i) => `dateRefueling${i + 1}`),
-        ...Array.from({ length: 6 }, (_, i) => `stateRefueling${i + 1}`),
-        ...Array.from({ length: 6 }, (_, i) => `priceRefueling${i + 1}`),
-        ...Array.from({ length: 6 }, (_, i) => `fuelGallons${i + 1}`),
-        ...Array.from({ length: 6 }, (_, i) => `fuelAmount${i + 1}`),
-        ...Array.from({ length: 6 }, (_, i) => `defGallons${i + 1}`),
-        ...Array.from({ length: 6 }, (_, i) => `defAmount${i + 1}`),
-        ...Array.from({ length: 5 }, (_, i) => `tollsDate${i + 1}`),
-        ...Array.from({ length: 5 }, (_, i) => `tollsAmount${i + 1}`),
-        ...Array.from({ length: 5 }, (_, i) => `scalesDate${i + 1}`),
-        ...Array.from({ length: 5 }, (_, i) => `scalesAmount${i + 1}`),
-        ...Array.from({ length: 5 }, (_, i) => `repairsDate${i + 1}`),
-        ...Array.from({ length: 5 }, (_, i) => `repairsAmount${i + 1}`),
-        ...Array.from({ length: 5 }, (_, i) => `repairsDescription${i + 1}`)
-    ];
-
-    const formData = {};
-    fields.forEach(field => {
-        const value = document.getElementById(field)?.value.trim();
-        if (value) {
-            formData[field] = value;
+    document.getElementById('generateQR').addEventListener('click', () => {
+      const formData = {};
+      document.querySelectorAll('input').forEach(input => {
+        if (input.id && input.value) {
+          formData[input.id] = input.value;
         }
+      });
+
+      const uniqueId = Date.now().toString(36) + Math.random().toString(36).substring(2);
+      localStorage.setItem(uniqueId, JSON.stringify(formData));
+
+      const qrContainer = document.getElementById('qrcode');
+      qrContainer.innerHTML = '';
+
+      new QRCode(qrContainer, {
+        text: uniqueId,
+        width: 300,
+        height: 300,
+        margin: 4
+      });
     });
-
-    const jsonData = JSON.stringify(formData);
-    const compressedData = LZString.compressToEncodedURIComponent(jsonData);
-
-    const canvas = document.getElementById('qrcode');
-    const qrStatus = document.getElementById('qrStatus');
-    const dataSize = document.getElementById('dataSize');
-
-    canvas.innerHTML = ''; 
-    qrStatus.textContent = ''; 
-    dataSize.textContent = `Data size: ${compressedData.length} characters`; 
-
-    try {
-        QRCode.toCanvas(canvas, compressedData, {
-            width: 300,
-            margin: 4,
-            errorCorrectionLevel: 'H'
-        }, (error) => {
-            if (error) {
-                qrStatus.textContent = 'QR code generation failed!';
-                qrStatus.style.color = 'red';
-                console.error('QR code generation error:', error);
-            } else {
-                qrStatus.textContent = 'QR code generated successfully!';
-                qrStatus.style.color = 'green';
-            }
-        });
-    } catch (err) {
-        qrStatus.textContent = 'Unexpected error occurred!';
-        qrStatus.style.color = 'red';
-        console.error('Unexpected error:', err);
-    }
-});
 
 
 // Сканування QR коду
 document.getElementById('scanQR').addEventListener('click', () => {
-    document.getElementById('reader').style.display = 'block';
-
-    const html5QrCode = new Html5Qrcode("reader");
-    const scanStatus = document.getElementById('scanStatus');
-    let attempts = 0;
-
-    const config = {
-        fps: 2,
-        qrbox: { width: 400, height: 400 },
-        aspectRatio: 1.0,
-        disableFlip: true,
-        experimentalFeatures: { useBarCodeDetectorIfSupported: true }
-    };
-
-    function handleSuccess(decodedText) {
-        attempts++;
-        scanStatus.textContent = `QR code scanned successfully after ${attempts} attempt(s)!`;
-        scanStatus.style.color = 'green';
-
-        try {
-            const decompressedData = LZString.decompressFromEncodedURIComponent(decodedText);
-            const formData = JSON.parse(decompressedData);
-
-            Object.keys(formData).forEach(key => {
-                if (document.getElementById(key)) {
-                    document.getElementById(key).value = formData[key];
-                }
-            });
-
-            html5QrCode.stop();
-            document.getElementById('reader').style.display = 'none';
-        } catch (error) {
-            console.error("Error parsing QR code data:", error);
-            scanStatus.textContent = 'Error parsing QR code data.';
-            scanStatus.style.color = 'red';
-        }
-    }
-
-    function handleError(errorMessage) {
-        attempts++;
-        scanStatus.textContent = `Scan attempt ${attempts} failed. Retrying...`;
-        scanStatus.style.color = 'orange';
-
-        console.warn(`Scan attempt ${attempts} failed:`, errorMessage);
-    }
-
-    html5QrCode.start(
+      const html5QrCode = new Html5Qrcode("reader");
+      html5QrCode.start(
         { facingMode: "environment" },
-        config,
-        handleSuccess,
-        handleError
-    ).catch(err => {
-        console.error('Error initializing scanner:', err);
-        scanStatus.textContent = 'Error initializing camera!';
-        scanStatus.style.color = 'red';
+        { fps: 10, qrbox: 300 },
+        (decodedText) => {
+          const data = localStorage.getItem(decodedText);
+          if (data) {
+            const formData = JSON.parse(data);
+            Object.keys(formData).forEach(key => {
+              if (document.getElementById(key)) {
+                document.getElementById(key).value = formData[key];
+              }
+            });
+            html5QrCode.stop();
+          } else {
+            document.getElementById('scanStatus').textContent = 'No data found for this QR code.';
+          }
+        },
+        (error) => {
+          console.warn('Scan failed:', error);
+        }
+      );
     });
-});
-
-document.getElementById('uploadImage').addEventListener('click', () => {
-    document.getElementById('fileInput').click();
-});
-
-document.getElementById('fileInput').addEventListener('change', (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function (e) {
-        const img = new Image();
-        img.src = e.target.result;
-        img.onload = function () {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-            try {
-                const qrCodeResult = jsQR(imageData.data, canvas.width, canvas.height);
-                if (qrCodeResult) {
-                    const decompressedData = LZString.decompressFromEncodedURIComponent(qrCodeResult.data);
-                    const formData = JSON.parse(decompressedData);
-
-                    Object.keys(formData).forEach(key => {
-                        if (document.getElementById(key)) {
-                            document.getElementById(key).value = formData[key];
-                        }
-                    });
-
-                    document.getElementById('scanStatus').textContent = 'QR code scanned successfully from image!';
-                    document.getElementById('scanStatus').style.color = 'green';
-                } else {
-                    document.getElementById('scanStatus').textContent = 'Failed to detect QR code in the image.';
-                    document.getElementById('scanStatus').style.color = 'red';
-                }
-            } catch (error) {
-                console.error('Error reading QR code from image:', error);
-                document.getElementById('scanStatus').textContent = 'Error parsing QR code from image.';
-                document.getElementById('scanStatus').style.color = 'red';
-            }
-        };
-    };
-    reader.readAsDataURL(file);
-});
-
-
       </script>
       
   </body>
