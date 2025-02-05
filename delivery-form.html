@@ -4,10 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Delivery Form</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://unpkg.com/jsqr"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
-  <script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.7"></script>
+
   <style>
     /* Базові стилі */
     body {
@@ -137,10 +138,11 @@
   
     <form id="form">
     <button type="button" id="scanQR">Scan QR Code</button>
-    <button type="button" id="generateQR">Generate QR Code</button>
-    <input type="file" id="fileInput" accept="image/*" style="display: none;">
-    <p id="scanStatus"></p>
-    <canvas id="qrcode"></canvas>
+<button type="button" id="generateQR">Generate QR Code</button>
+<input type="file" id="fileInput" accept="image/*" style="display: none;">
+<p id="scanStatus"></p>
+<div id="reader" style="width: 300px; height: 300px; display: none;"></div> <!-- Додано -->
+<canvas id="qrcode"></canvas>
 
 
       <label>Company Name:</label>
@@ -382,54 +384,60 @@ link.click();
           dynamicFields.appendChild(fieldSet);
         });
 //Генерація QR коду 
-    document.getElementById('generateQR').addEventListener('click', () => {
-      const formData = {};
-      document.querySelectorAll('input').forEach(input => {
+document.getElementById('generateQR').addEventListener('click', () => {
+    const formData = {};
+    document.querySelectorAll('input').forEach(input => {
         if (input.id && input.value) {
-          formData[input.id] = input.value;
+            formData[input.id] = input.value;
         }
-      });
+    });
 
-      const uniqueId = Date.now().toString(36) + Math.random().toString(36).substring(2);
-      localStorage.setItem(uniqueId, JSON.stringify(formData));
+    const uniqueId = Date.now().toString(36) + Math.random().toString(36).substring(2);
+    localStorage.setItem(uniqueId, JSON.stringify(formData));
 
-      const qrContainer = document.getElementById('qrcode');
-      qrContainer.innerHTML = '';
+    const qrContainer = document.getElementById('qrcode');
+    qrContainer.innerHTML = '';
 
-      new QRCode(qrContainer, {
+    new QRCode(qrContainer, {
         text: uniqueId,
         width: 300,
         height: 300,
-        margin: 4
-      });
+        correctLevel: QRCode.CorrectLevel.H // Встановлено рівень корекції помилок
     });
+});
 
-
-// Сканування QR коду
 document.getElementById('scanQR').addEventListener('click', () => {
-      const html5QrCode = new Html5Qrcode("reader");
-      html5QrCode.start(
+    const reader = document.getElementById('reader');
+    reader.style.display = 'block';
+
+    const html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start(
         { facingMode: "environment" },
         { fps: 10, qrbox: 300 },
         (decodedText) => {
-          const data = localStorage.getItem(decodedText);
-          if (data) {
-            const formData = JSON.parse(data);
-            Object.keys(formData).forEach(key => {
-              if (document.getElementById(key)) {
-                document.getElementById(key).value = formData[key];
-              }
-            });
-            html5QrCode.stop();
-          } else {
-            document.getElementById('scanStatus').textContent = 'No data found for this QR code.';
-          }
+            const data = localStorage.getItem(decodedText);
+            if (data) {
+                const formData = JSON.parse(data);
+                Object.keys(formData).forEach(key => {
+                    if (document.getElementById(key)) {
+                        document.getElementById(key).value = formData[key];
+                    }
+                });
+                html5QrCode.stop();
+                reader.style.display = 'none';
+            } else {
+                document.getElementById('scanStatus').textContent = 'No data found for this QR code.';
+            }
         },
         (error) => {
-          console.warn('Scan failed:', error);
+            console.warn('Scan failed:', error);
         }
-      );
+    ).catch(err => {
+        console.error('Error initializing scanner:', err);
+        document.getElementById('scanStatus').textContent = 'Error initializing camera!';
     });
+});
+
       </script>
       
   </body>
