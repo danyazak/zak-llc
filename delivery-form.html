@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Delivery Form</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://unpkg.com/jsqr"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
-<script src="https://unpkg.com/html5-qrcode@2.3.7"></script>
+    <script src="https://unpkg.com/jsqr"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
 
   <style>
     /* Базові стилі */
@@ -137,12 +138,12 @@
     <h1>Delivery Form</h1>
   
     <form id="form">
-    <button type="button" id="scanQR">Scan QR Code</button>
-<button type="button" id="generateQR">Generate QR Code</button>
-<input type="file" id="fileInput" accept="image/*" style="display: none;">
-<p id="scanStatus"></p>
-<div id="reader" style="width: 300px; height: 300px; display: none;"></div> <!-- Додано -->
-<canvas id="qrcode"></canvas>
+<button type="button" id="scanQR">Scan QR Code (Live)</button>
+        <button type="button" id="uploadImage">Upload QR Code Image</button>
+        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+        <p id="scanStatus" style="text-align: center; font-weight: bold; color: blue;"></p>
+        <div id="reader" style="width: 300px; margin: 20px auto; display: none;"></div>
+        <canvas id="imageCanvas" style="display: none;"></canvas>
 
 
       <label>Company Name:</label>
@@ -220,6 +221,11 @@
       <label>Cash Advance State:</label>
       <input type="text" id="cashAdvanceState" placeholder="Enter state"><br>  
       <button type="button" id="generate">Generate PDF</button>
+      
+        <button type="button" id="generateQR">Generate QR Code</button>
+        <p id="qrStatus" style="text-align: center; font-weight: bold; color: green;"></p>
+        <p id="dataSize" style="text-align: center; font-style: italic;"></p>
+        <canvas id="qrcode" style="margin: 20px auto; display: block;"></canvas>
     </form>
   
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
@@ -385,59 +391,100 @@ link.click();
         });
 //Генерація QR коду 
 document.getElementById('generateQR').addEventListener('click', () => {
-    const formData = {};
-    document.querySelectorAll('input').forEach(input => {
-        if (input.id && input.value) {
-            formData[input.id] = input.value;
-        }
-    });
+            const fields = [
+                'companyName', 'driverName', 'truckNumber', 'trailerNumber', 'dateFrom', 'dateTo',
+                'cashAdvanceDate1', 'cashAdvanceAmount1', 'cashAdvanceState1',
+                ...Array.from({ length: 9 }, (_, i) => `pickUpDate${i + 1}`),
+                ...Array.from({ length: 9 }, (_, i) => `cityStateFrom${i + 1}`),
+                ...Array.from({ length: 9 }, (_, i) => `deliveryDate${i + 1}`),
+                ...Array.from({ length: 9 }, (_, i) => `cityStateTo${i + 1}`),
+                ...Array.from({ length: 6 }, (_, i) => `mileageRefueling${i + 1}`),
+                ...Array.from({ length: 6 }, (_, i) => `dateRefueling${i + 1}`),
+                ...Array.from({ length: 6 }, (_, i) => `stateRefueling${i + 1}`),
+                ...Array.from({ length: 6 }, (_, i) => `priceRefueling${i + 1}`),
+                ...Array.from({ length: 6 }, (_, i) => `fuelGallons${i + 1}`),
+                ...Array.from({ length: 6 }, (_, i) => `fuelAmount${i + 1}`),
+                ...Array.from({ length: 6 }, (_, i) => `defGallons${i + 1}`),
+                ...Array.from({ length: 6 }, (_, i) => `defAmount${i + 1}`),
+                ...Array.from({ length: 5 }, (_, i) => `tollsDate${i + 1}`),
+                ...Array.from({ length: 5 }, (_, i) => `tollsAmount${i + 1}`),
+                ...Array.from({ length: 5 }, (_, i) => `scalesDate${i + 1}`),
+                ...Array.from({ length: 5 }, (_, i) => `scalesAmount${i + 1}`),
+                ...Array.from({ length: 5 }, (_, i) => `repairsDate${i + 1}`),
+                ...Array.from({ length: 5 }, (_, i) => `repairsAmount${i + 1}`),
+                ...Array.from({ length: 5 }, (_, i) => `repairsDescription${i + 1}`)
+            ];
 
-    const uniqueId = Date.now().toString(36) + Math.random().toString(36).substring(2);
-    localStorage.setItem(uniqueId, JSON.stringify(formData));
+            const formData = {};
+            fields.forEach(field => {
+                const value = document.getElementById(field)?.value.trim();
+                if (value) {
+                    formData[field] = value;
+                }
+            });
 
-    const qrContainer = document.getElementById('qrcode');
-    qrContainer.innerHTML = '';
+            const jsonData = JSON.stringify(formData);
+            const compressedData = pako.deflate(jsonData, { to: 'string' });
 
-    new QRCode(qrContainer, {
-        text: uniqueId,
-        width: 300,
-        height: 300,
-        correctLevel: QRCode.CorrectLevel.H // Встановлено рівень корекції помилок
-    });
-});
+            const canvas = document.getElementById('qrcode');
+            const qrStatus = document.getElementById('qrStatus');
+            const dataSize = document.getElementById('dataSize');
 
-document.getElementById('scanQR').addEventListener('click', () => {
-    const reader = document.getElementById('reader');
-    reader.style.display = 'block';
+            canvas.innerHTML = '';
+            qrStatus.textContent = '';
+            dataSize.textContent = `Data size: ${compressedData.length} characters`;
 
-    const html5QrCode = new Html5Qrcode("reader");
-    html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 300 },
-        (decodedText) => {
-            const data = localStorage.getItem(decodedText);
-            if (data) {
-                const formData = JSON.parse(data);
-                Object.keys(formData).forEach(key => {
-                    if (document.getElementById(key)) {
-                        document.getElementById(key).value = formData[key];
-                    }
+            try {
+                new QRCode(canvas, {
+                    text: btoa(compressedData),
+                    width: 300,
+                    margin: 4,
+                    errorCorrectionLevel: 'H'
                 });
-                html5QrCode.stop();
-                reader.style.display = 'none';
-            } else {
-                document.getElementById('scanStatus').textContent = 'No data found for this QR code.';
+                qrStatus.textContent = 'QR code generated successfully!';
+                qrStatus.style.color = 'green';
+            } catch (err) {
+                qrStatus.textContent = 'QR code generation failed!';
+                qrStatus.style.color = 'red';
+                console.error('QR code generation error:', err);
             }
-        },
-        (error) => {
-            console.warn('Scan failed:', error);
-        }
-    ).catch(err => {
-        console.error('Error initializing scanner:', err);
-        document.getElementById('scanStatus').textContent = 'Error initializing camera!';
-    });
-});
+        });
 
+        document.getElementById('scanQR').addEventListener('click', () => {
+            document.getElementById('reader').style.display = 'block';
+
+            const html5QrCode = new Html5Qrcode("reader");
+            const scanStatus = document.getElementById('scanStatus');
+
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: 300 },
+                (decodedText) => {
+                    try {
+                        const decompressedData = pako.inflate(atob(decodedText), { to: 'string' });
+                        const formData = JSON.parse(decompressedData);
+
+                        Object.keys(formData).forEach(key => {
+                            if (document.getElementById(key)) {
+                                document.getElementById(key).value = formData[key];
+                            }
+                        });
+
+                        html5QrCode.stop();
+                        document.getElementById('reader').style.display = 'none';
+                        scanStatus.textContent = 'QR code scanned successfully!';
+                        scanStatus.style.color = 'green';
+                    } catch (error) {
+                        console.error("Error parsing QR code data:", error);
+                        scanStatus.textContent = 'Error parsing QR code data.';
+                        scanStatus.style.color = 'red';
+                    }
+                },
+                (error) => {
+                    console.warn('Scan failed:', error);
+                }
+            );
+        });
       </script>
       
   </body>
