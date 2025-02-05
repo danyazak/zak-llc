@@ -409,22 +409,33 @@ document.getElementById('generateQR').addEventListener('click', () => {
 
     const formData = {};
     fields.forEach(field => {
-        formData[field] = document.getElementById(field)?.value || '';
+        const value = document.getElementById(field)?.value.trim();
+        if (value) {
+            formData[field] = value; // Додаємо тільки заповнені поля
+        }
     });
 
     const jsonData = JSON.stringify(formData);
-    const compressedData = LZString.compressToBase64(jsonData); 
+    const compressedData = LZString.compressToEncodedURIComponent(jsonData); // Оптимізоване стиснення
 
     const canvas = document.getElementById('qrcode');
+    canvas.innerHTML = ''; // Очищення старих QR-кодів
 
-    QRCode.toCanvas(canvas, compressedData, {
-        width: 300,                 // Збільшений розмір
-        margin: 4,                  // Додатковий відступ
-        errorCorrectionLevel: 'H'   // Високий рівень корекції помилок
-    }, (error) => {
-        if (error) console.error('QR code generation error:', error);
-        else console.log('QR code generated successfully!');
-    });
+    try {
+        QRCode.toCanvas(canvas, compressedData, {
+            width: 300,                 // Більший розмір для кращої якості
+            margin: 4,                  // Поля для контрасту
+            errorCorrectionLevel: 'H'   // Високий рівень корекції помилок
+        }, (error) => {
+            if (error) {
+                console.error('QR code generation error:', error);
+            } else {
+                console.log('QR code generated successfully!');
+            }
+        });
+    } catch (err) {
+        console.error('Unexpected error:', err);
+    }
 });
 
 // Сканування QR коду
