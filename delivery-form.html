@@ -133,9 +133,12 @@
 </head>
 <body>
     <h1>Delivery Form</h1>
-  <button type="button" id="scanQR">Scan QR Code</button>
-<div id="reader" style="width: 300px; margin: 20px auto; display: none;"></div>
+  
     <form id="form">
+      <button type="button" id="scanQR">Scan QR Code</button>
+      <p id="scanStatus" style="text-align: center; font-weight: bold; color: blue;"></p>
+<div id="reader" style="width: 300px; margin: 20px auto; display: none;"></div>
+
       <label>Company Name:</label>
       <input type="text" id="companyName" placeholder="Enter company name"><br>
       <label>Driver Name:</label>
@@ -215,7 +218,10 @@
   
       <button type="button" id="generate">Generate PDF</button>
       <button type="button" id="generateQR">Generate QR Code</button>
+<p id="qrStatus" style="text-align: center; font-weight: bold; color: green;"></p>
+<p id="dataSize" style="text-align: center; font-style: italic;"></p>
 <canvas id="qrcode" style="margin: 20px auto; display: block;"></canvas>
+
 
 
     </form>
@@ -411,50 +417,62 @@ document.getElementById('generateQR').addEventListener('click', () => {
     fields.forEach(field => {
         const value = document.getElementById(field)?.value.trim();
         if (value) {
-            formData[field] = value; // Додаємо тільки заповнені поля
+            formData[field] = value;
         }
     });
 
     const jsonData = JSON.stringify(formData);
-    const compressedData = LZString.compressToEncodedURIComponent(jsonData); // Оптимізоване стиснення
+    const compressedData = LZString.compressToEncodedURIComponent(jsonData);
 
     const canvas = document.getElementById('qrcode');
-    canvas.innerHTML = ''; // Очищення старих QR-кодів
+    const qrStatus = document.getElementById('qrStatus');
+    const dataSize = document.getElementById('dataSize');
+
+    canvas.innerHTML = ''; 
+    qrStatus.textContent = ''; 
+    dataSize.textContent = `Data size: ${compressedData.length} characters`; 
 
     try {
         QRCode.toCanvas(canvas, compressedData, {
-            width: 300,                 // Більший розмір для кращої якості
-            margin: 4,                  // Поля для контрасту
-            errorCorrectionLevel: 'H'   // Високий рівень корекції помилок
+            width: 300,
+            margin: 4,
+            errorCorrectionLevel: 'H'
         }, (error) => {
             if (error) {
+                qrStatus.textContent = 'QR code generation failed!';
+                qrStatus.style.color = 'red';
                 console.error('QR code generation error:', error);
             } else {
-                console.log('QR code generated successfully!');
+                qrStatus.textContent = 'QR code generated successfully!';
+                qrStatus.style.color = 'green';
             }
         });
     } catch (err) {
+        qrStatus.textContent = 'Unexpected error occurred!';
+        qrStatus.style.color = 'red';
         console.error('Unexpected error:', err);
     }
 });
+
 
 // Сканування QR коду
 document.getElementById('scanQR').addEventListener('click', () => {
     document.getElementById('reader').style.display = 'block';
 
     const html5QrCode = new Html5Qrcode("reader");
-    const config = {
-        fps: 10,
-        qrbox: 300,  // Збільшена зона сканування
-        aspectRatio: 1.0
-    };
+    const scanStatus = document.getElementById('scanStatus');
+    let attempts = 0; 
 
     html5QrCode.start(
         { facingMode: "environment" },
-        config,
+        { fps: 10, qrbox: 300 },
         (decodedText) => {
+            attempts++;
+            scanStatus.textContent = `QR code scanned successfully after ${attempts} attempt(s)!`;
+            scanStatus.style.color = 'green';
+
             try {
-                const decompressedData = LZString.decompressFromBase64(decodedText);
+                const decompressedData = LZString.decompressFromEncodedURIComponent(decodedText);
                 const formData = JSON.parse(decompressedData);
 
                 Object.keys(formData).forEach(key => {
@@ -470,11 +488,13 @@ document.getElementById('scanQR').addEventListener('click', () => {
             }
         },
         (errorMessage) => {
+            attempts++;
+            scanStatus.textContent = `Scan attempt ${attempts} failed. Retrying...`;
+            scanStatus.style.color = 'orange';
             console.warn("QR code scan error:", errorMessage);
         }
     );
 });
-
 
       </script>
       
