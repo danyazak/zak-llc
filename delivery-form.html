@@ -391,37 +391,78 @@ link.click();
         });
 //Генерація QR коду 
     document.getElementById('generateQR').addEventListener('click', () => {
-            const fields = [
-                'companyName', 'driverName', 'truckNumber', 'trailerNumber', 'dateFrom', 'dateTo',
-                'cashAdvanceDate1', 'cashAdvanceAmount1', 'cashAdvanceState1',
-                ...Array.from({ length: 9 }, (_, i) => `pickUpDate${i + 1}`),
-                ...Array.from({ length: 9 }, (_, i) => `cityStateFrom${i + 1}`),
-                ...Array.from({ length: 9 }, (_, i) => `deliveryDate${i + 1}`),
-                ...Array.from({ length: 9 }, (_, i) => `cityStateTo${i + 1}`),
-                ...Array.from({ length: 6 }, (_, i) => `mileageRefueling${i + 1}`),
-                ...Array.from({ length: 6 }, (_, i) => `dateRefueling${i + 1}`),
-                ...Array.from({ length: 6 }, (_, i) => `stateRefueling${i + 1}`),
-                ...Array.from({ length: 6 }, (_, i) => `priceRefueling${i + 1}`),
-                ...Array.from({ length: 6 }, (_, i) => `fuelGallons${i + 1}`),
-                ...Array.from({ length: 6 }, (_, i) => `fuelAmount${i + 1}`),
-                ...Array.from({ length: 6 }, (_, i) => `defGallons${i + 1}`),
-                ...Array.from({ length: 6 }, (_, i) => `defAmount${i + 1}`),
-                ...Array.from({ length: 5 }, (_, i) => `tollsDate${i + 1}`),
-                ...Array.from({ length: 5 }, (_, i) => `tollsAmount${i + 1}`),
-                ...Array.from({ length: 5 }, (_, i) => `scalesDate${i + 1}`),
-                ...Array.from({ length: 5 }, (_, i) => `scalesAmount${i + 1}`),
-                ...Array.from({ length: 5 }, (_, i) => `repairsDate${i + 1}`),
-                ...Array.from({ length: 5 }, (_, i) => `repairsAmount${i + 1}`),
-                ...Array.from({ length: 5 }, (_, i) => `repairsDescription${i + 1}`)
-            ];
+    const fields = [
+        'companyName', 'driverName', 'truckNumber', 'trailerNumber', 'dateFrom', 'dateTo',
+        'cashAdvanceDate1', 'cashAdvanceAmount1', 'cashAdvanceState1',
+        ...Array.from({ length: 9 }, (_, i) => `pickUpDate${i + 1}`),
+        ...Array.from({ length: 9 }, (_, i) => `cityStateFrom${i + 1}`),
+        ...Array.from({ length: 9 }, (_, i) => `deliveryDate${i + 1}`),
+        ...Array.from({ length: 9 }, (_, i) => `cityStateTo${i + 1}`),
+        ...Array.from({ length: 6 }, (_, i) => `mileageRefueling${i + 1}`),
+        ...Array.from({ length: 6 }, (_, i) => `dateRefueling${i + 1}`),
+        ...Array.from({ length: 6 }, (_, i) => `stateRefueling${i + 1}`),
+        ...Array.from({ length: 6 }, (_, i) => `priceRefueling${i + 1}`),
+        ...Array.from({ length: 6 }, (_, i) => `fuelGallons${i + 1}`),
+        ...Array.from({ length: 6 }, (_, i) => `fuelAmount${i + 1}`),
+        ...Array.from({ length: 6 }, (_, i) => `defGallons${i + 1}`),
+        ...Array.from({ length: 6 }, (_, i) => `defAmount${i + 1}`),
+        ...Array.from({ length: 5 }, (_, i) => `tollsDate${i + 1}`),
+        ...Array.from({ length: 5 }, (_, i) => `tollsAmount${i + 1}`),
+        ...Array.from({ length: 5 }, (_, i) => `scalesDate${i + 1}`),
+        ...Array.from({ length: 5 }, (_, i) => `scalesAmount${i + 1}`),
+        ...Array.from({ length: 5 }, (_, i) => `repairsDate${i + 1}`),
+        ...Array.from({ length: 5 }, (_, i) => `repairsAmount${i + 1}`),
+        ...Array.from({ length: 5 }, (_, i) => `repairsDescription${i + 1}`)
+    ];
 
-            const formData = {};
-            fields.forEach(field => {
-                const value = document.getElementById(field)?.value.trim();
-                if (value) {
-                    formData[field] = value;
-                }
-            });
+    const formData = {};
+    fields.forEach(field => {
+        const value = document.getElementById(field)?.value.trim();
+        if (value) {
+            formData[field] = value;
+        }
+    });
+
+    console.log("Step 1 - Raw Form Data:", formData);
+
+    try {
+        const jsonData = JSON.stringify(formData);
+        console.log("Step 2 - JSON Data:", jsonData);
+
+        const compressedData = pako.deflate(jsonData);
+        console.log("Step 3 - Compressed Data (Uint8Array):", compressedData);
+
+        const encodedData = base32768.encode(new Uint8Array(compressedData));
+        console.log("Step 4 - Encoded Data (Base32768):", encodedData);
+
+        const qrContainer = document.getElementById('qrcode');
+        const qrStatus = document.getElementById('qrStatus');
+        const dataSize = document.getElementById('dataSize');
+
+        qrContainer.innerHTML = '';
+        qrStatus.textContent = '';
+        dataSize.textContent = `Data size: ${encodedData.length} characters`;
+
+        if (encodedData.length === 0) {
+            throw new Error("Encoded data is empty, cannot generate QR code.");
+        }
+
+        new QRCode(qrContainer, {
+            text: encodedData,
+            width: 300,
+            height: 300,
+            correctLevel: QRCode.CorrectLevel.H
+        });
+
+        qrStatus.textContent = '✅ QR code generated successfully!';
+        qrStatus.style.color = 'green';
+    } catch (err) {
+        console.error('❌ QR code generation error:', err);
+        document.getElementById('qrStatus').textContent = 'QR code generation failed!';
+        document.getElementById('qrStatus').style.color = 'red';
+    }
+});
+
 
             const jsonData = JSON.stringify(formData);
             const compressedData = pako.deflate(jsonData);
