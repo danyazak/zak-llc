@@ -7,6 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/jsqr"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/base32768@1.1.0/base32768.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 
@@ -423,7 +424,8 @@ link.click();
             });
 
             const jsonData = JSON.stringify(formData);
-            const compressedData = pako.deflate(jsonData, { to: 'string' });
+            const compressedData = pako.deflate(jsonData);
+            const encodedData = base32768.encode(new Uint8Array(compressedData));
 
             const qrContainer = document.getElementById('qrcode');
             const qrStatus = document.getElementById('qrStatus');
@@ -431,11 +433,11 @@ link.click();
 
             qrContainer.innerHTML = '';
             qrStatus.textContent = '';
-            dataSize.textContent = `Data size: ${compressedData.length} characters`;
+            dataSize.textContent = `Data size: ${encodedData.length} characters`;
 
             try {
                 new QRCode(qrContainer, {
-                    text: btoa(compressedData),
+                    text: encodedData,
                     width: 300,
                     height: 300,
                     correctLevel: QRCode.CorrectLevel.H
@@ -460,7 +462,8 @@ link.click();
                 { fps: 10, qrbox: 300 },
                 (decodedText) => {
                     try {
-                        const decompressedData = pako.inflate(atob(decodedText), { to: 'string' });
+                        const decodedData = base32768.decode(decodedText);
+                        const decompressedData = pako.inflate(decodedData, { to: 'string' });
                         const formData = JSON.parse(decompressedData);
 
                         Object.keys(formData).forEach(key => {
@@ -490,69 +493,51 @@ link.click();
         });
 
         document.getElementById('fileInput').addEventListener('change', (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+            const file = event.target.files[0];
+            if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = function (e) {
-        const img = new Image();
-        img.src = e.target.result;
-        img.onload = function () {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function () {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
 
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
 
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, canvas.width, canvas.height);
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, canvas.width, canvas.height);
 
-            if (code) {
-                try {
-                    const base64Data = code.data;
+                    if (code) {
+                        try {
+                            const decodedData = base32768.decode(code.data);
+                            const decompressedData = pako.inflate(decodedData, { to: 'string' });
+                            const formData = JSON.parse(decompressedData);
 
-                    // Перевірка коректності Base64
-                    const isBase64 = /^[A-Za-z0-9+/=]+$/.test(base64Data);
-                    if (!isBase64) {
-                        throw new Error('Invalid Base64 data detected.');
-                    }
+                            Object.keys(formData).forEach(key => {
+                                if (document.getElementById(key)) {
+                                    document.getElementById(key).value = formData[key];
+                                }
+                            });
 
-                    let decompressedData;
-                    try {
-                        decompressedData = pako.inflate(atob(base64Data), { to: 'string' });
-                    } catch (inflateError) {
-                        console.warn('Data might not be compressed. Trying as raw JSON.');
-                        decompressedData = atob(base64Data); // Спроба обробити як незжаті дані
-                    }
-
-                    // Перевірка чи це валідний JSON
-                    JSON.parse(decompressedData); 
-
-                    const formData = JSON.parse(decompressedData);
-                    Object.keys(formData).forEach(key => {
-                        if (document.getElementById(key)) {
-                            document.getElementById(key).value = formData[key];
+                            document.getElementById('scanStatus').textContent = 'QR code scanned from image successfully!';
+                            document.getElementById('scanStatus').style.color = 'green';
+                        } catch (error) {
+                            console.error('Error parsing QR code from image:', error);
+                            document.getElementById('scanStatus').textContent = 'Error parsing QR code from image.';
+                            document.getElementById('scanStatus').style.color = 'red';
                         }
-                    });
-
-                    document.getElementById('scanStatus').textContent = 'QR code scanned from image successfully!';
-                    document.getElementById('scanStatus').style.color = 'green';
-                } catch (error) {
-                    console.error('Error parsing QR code from image:', error);
-                    document.getElementById('scanStatus').textContent = `Error parsing QR code: ${error.message}`;
-                    document.getElementById('scanStatus').style.color = 'red';
-                }
-            } else {
-                document.getElementById('scanStatus').textContent = 'No QR code detected in the image.';
-                document.getElementById('scanStatus').style.color = 'red';
-            }
-        };
-    };
-    reader.readAsDataURL(file);
-});
-
-
+                    } else {
+                        document.getElementById('scanStatus').textContent = 'No QR code detected in the image.';
+                        document.getElementById('scanStatus').style.color = 'red';
+                    }
+                };
+            };
+            reader.readAsDataURL(file);
+        });
       </script>
       
   </body>
