@@ -1,0 +1,121 @@
+ /* Базові стилі */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      background-color: #333;
+      color: #fff;
+      padding: 20px 0;
+      font-size: 2rem;
+      margin: 0;
+    }
+
+    form {
+      max-width: 800px;
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    h3 {
+      margin-top: 20px;
+      color: #555;
+      font-size: 1.3rem;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin: 10px 0 5px;
+    }
+
+    input[type="text"] {
+      width: 95%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+     
+    #date {
+      width: 38%;
+      min-height: 35px;
+      border-radius: 5px;
+    }
+     
+    button {
+      display: block;
+      width: 100%;
+      background-color: #007bff;
+      color: white;
+      padding: 10px 15px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #addField, #addFuelField, #addExpensesField  {
+      background-color: #28a745;
+    }
+
+    #addFuelField:hover {
+      background-color: #218838;
+    }
+
+    #addField:hover {
+      background-color: #218838;
+    }
+
+    #addExpensesField:hover {
+      background-color: #218838;
+    }
+
+    /* Декоративні елементи */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-size: cover;
+      background-position: center;
+      z-index: -1;
+      filter: brightness(0.7);
+    }
+
+    /* Адаптивність */
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      form {
+        width: 90%;
+        padding: 15px;
+      }
+
+      button {
+        font-size: 0.9rem;
+      }
+
+      input[type="text"] {
+        padding: 8px;
+        font-size: 0.9rem;
+      }
+    }
