@@ -515,7 +515,6 @@ document.getElementById('uploadImage').addEventListener('click', () => {
     document.getElementById('fileInput').click();
 });
 
-// Обробка завантаженого зображення
 document.getElementById('fileInput').addEventListener('change', (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -529,20 +528,32 @@ document.getElementById('fileInput').addEventListener('change', (event) => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
 
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
+            // 1️⃣ Масштабування для покращення зчитуваності
+            const scaleFactor = 4; // Збільшення розміру у 4 рази
+            const quietZone = 40;  // Додаємо "quiet zone" навколо QR-коду
 
+            canvas.width = img.width * scaleFactor + quietZone * 2;
+            canvas.height = img.height * scaleFactor + quietZone * 2;
+
+            // Білий фон для покращення контрасту
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Малюємо зображення з "quiet zone"
+            ctx.drawImage(img, quietZone, quietZone, img.width * scaleFactor, img.height * scaleFactor);
+
+            // 2️⃣ Параметри для jsQR
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const code = jsQR(imageData.data, canvas.width, canvas.height, {
                 inversionAttempts: "attemptBoth",
+                willTryWithoutInversion: true,
             });
 
+            // 3️⃣ Обробка зчитаних даних
             if (code && code.data.trim() !== '') {
                 try {
                     console.log("Step 1 - Decoded QR Code:", code.data);
 
-                    // Видаляємо невидимі символи, включаючи BOM
                     const cleanedData = code.data.replace(/[\u0000-\u001F\u007F\uFEFF]/g, '');
                     console.log("Step 1.1 - Cleaned QR Code Data:", cleanedData);
 
@@ -576,6 +587,7 @@ document.getElementById('fileInput').addEventListener('change', (event) => {
     };
     reader.readAsDataURL(file);
 });
+
 
       </script>
       
