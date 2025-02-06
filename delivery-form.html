@@ -389,7 +389,7 @@ link.click();
           dynamicFields.appendChild(fieldSet);
         });
 //Генерація QR коду 
- document.getElementById('generateQR').addEventListener('click', () => {
+   document.getElementById('generateQR').addEventListener('click', () => {
             const fields = [
                 'companyName', 'driverName', 'truckNumber', 'trailerNumber', 'dateFrom', 'dateTo',
                 'cashAdvanceDate1', 'cashAdvanceAmount1', 'cashAdvanceState1',
@@ -483,6 +483,56 @@ link.click();
                     console.warn('Scan failed:', error);
                 }
             );
+        });
+
+        document.getElementById('uploadImage').addEventListener('click', () => {
+            document.getElementById('fileInput').click();
+        });
+
+        document.getElementById('fileInput').addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function () {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, canvas.width, canvas.height);
+
+                    if (code) {
+                        try {
+                            const decompressedData = pako.inflate(atob(code.data), { to: 'string' });
+                            const formData = JSON.parse(decompressedData);
+
+                            Object.keys(formData).forEach(key => {
+                                if (document.getElementById(key)) {
+                                    document.getElementById(key).value = formData[key];
+                                }
+                            });
+
+                            document.getElementById('scanStatus').textContent = 'QR code scanned from image successfully!';
+                            document.getElementById('scanStatus').style.color = 'green';
+                        } catch (error) {
+                            console.error('Error parsing QR code from image:', error);
+                            document.getElementById('scanStatus').textContent = 'Error parsing QR code from image.';
+                            document.getElementById('scanStatus').style.color = 'red';
+                        }
+                    } else {
+                        document.getElementById('scanStatus').textContent = 'No QR code detected in the image.';
+                        document.getElementById('scanStatus').style.color = 'red';
+                    }
+                };
+            };
+            reader.readAsDataURL(file);
         });
       </script>
       
