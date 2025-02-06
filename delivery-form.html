@@ -463,35 +463,6 @@ link.click();
     }
 });
 
-
-            const jsonData = JSON.stringify(formData);
-            const compressedData = pako.deflate(jsonData);
-            const encodedData = base32768.encode(new Uint8Array(compressedData));
-
-            const qrContainer = document.getElementById('qrcode');
-            const qrStatus = document.getElementById('qrStatus');
-            const dataSize = document.getElementById('dataSize');
-
-            qrContainer.innerHTML = '';
-            qrStatus.textContent = '';
-            dataSize.textContent = `Data size: ${encodedData.length} characters`;
-
-            try {
-                new QRCode(qrContainer, {
-                    text: encodedData,
-                    width: 300,
-                    height: 300,
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-                qrStatus.textContent = 'QR code generated successfully!';
-                qrStatus.style.color = 'green';
-            } catch (err) {
-                qrStatus.textContent = 'QR code generation failed!';
-                qrStatus.style.color = 'red';
-                console.error('QR code generation error:', err);
-            }
-        });
-
         document.getElementById('scanQR').addEventListener('click', () => {
     const html5QrCode = new Html5Qrcode("reader");
     const scanStatus = document.getElementById('scanStatus');
