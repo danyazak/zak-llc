@@ -447,15 +447,31 @@ document.getElementById('generateQR').addEventListener('click', () => {
             throw new Error("Encoded data is empty, cannot generate QR code.");
         }
 
-        new QRCode(qrContainer, {
+        const qrCode = new QRCode(qrContainer, {
             text: encodedData,
             width: 400,  // Збільшено розмір для кращої зчитуваності
             height: 400,
-            correctLevel: QRCode.CorrectLevel.M // Знижено рівень корекції для зменшення щільності
+            correctLevel: QRCode.CorrectLevel.M
         });
 
         qrStatus.textContent = '✅ QR code generated successfully!';
         qrStatus.style.color = 'green';
+
+        // Зачекаємо, поки QR-код буде згенерований
+        setTimeout(() => {
+            const qrImage = qrContainer.querySelector('img');
+            if (qrImage) {
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: [150, 150]  // Великий формат PDF
+                });
+
+                pdf.addImage(qrImage.src, 'PNG', 10, 10, 130, 130); // Вставлення QR-коду у PDF
+                pdf.save('QR_Code.pdf'); // Завантаження PDF
+            }
+        }, 1000);  // Невелика затримка для гарантії генерації QR-коду
+
     } catch (err) {
         console.error('❌ QR code generation error:', err);
         document.getElementById('qrStatus').textContent = 'QR code generation failed!';
