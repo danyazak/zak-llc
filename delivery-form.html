@@ -228,7 +228,20 @@
         <p id="qrStatus" style="text-align: center; font-weight: bold; color: green;"></p>
         <p id="dataSize" style="text-align: center; font-style: italic;"></p>
 <div id="qrcode" style="margin: 20px auto; display: block;"></div>    </form>
-  
+  <!-- QR Code бібліотека -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" onerror="loadBackupQRCode()"></script>
+
+<!-- jsPDF бібліотека -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+    // Резервне підключення, якщо основне не працює
+    function loadBackupQRCode() {
+        const script = document.createElement('script');
+        script.src = "https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js";
+        document.head.appendChild(script);
+    }
+</script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
     <script>
         document.getElementById('generate').addEventListener('click', async () => {
@@ -450,7 +463,7 @@ document.getElementById('generateQR').addEventListener('click', () => {
 
         const qrCode = new QRCode(qrContainer, {
             text: encodedData,
-            width: 400,  // Збільшено розмір для кращої зчитуваності
+            width: 400,  
             height: 400,
             correctLevel: QRCode.CorrectLevel.M
         });
@@ -458,20 +471,19 @@ document.getElementById('generateQR').addEventListener('click', () => {
         qrStatus.textContent = '✅ QR code generated successfully!';
         qrStatus.style.color = 'green';
 
-        // Зачекаємо, поки QR-код буде згенерований
         setTimeout(() => {
             const qrImage = qrContainer.querySelector('img');
             if (qrImage) {
                 const pdf = new jsPDF({
                     orientation: 'portrait',
                     unit: 'mm',
-                    format: [150, 150]  // Великий формат PDF
+                    format: [150, 150]
                 });
 
-                pdf.addImage(qrImage.src, 'PNG', 10, 10, 130, 130); // Вставлення QR-коду у PDF
-                pdf.save('QR_Code.pdf'); // Завантаження PDF
+                pdf.addImage(qrImage.src, 'PNG', 10, 10, 130, 130);
+                pdf.save('QR_Code.pdf');
             }
-        }, 1000);  // Невелика затримка для гарантії генерації QR-коду
+        }, 1000);
 
     } catch (err) {
         console.error('❌ QR code generation error:', err);
@@ -479,6 +491,7 @@ document.getElementById('generateQR').addEventListener('click', () => {
         document.getElementById('qrStatus').style.color = 'red';
     }
 });
+
 
         document.getElementById('scanQR').addEventListener('click', () => {
     const html5QrCode = new Html5Qrcode("reader");
