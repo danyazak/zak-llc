@@ -511,10 +511,7 @@ document.getElementById('generateQR').addEventListener('click', () => {
 
 
         document.getElementById('uploadImage').addEventListener('click', () => {
-            document.getElementById('fileInput').click();
-        });
-
-       document.getElementById('fileInput').addEventListener('change', (event) => {
+            document.getElementById('fileInput').addEventListener('change', (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
@@ -532,43 +529,36 @@ document.getElementById('generateQR').addEventListener('click', () => {
             ctx.drawImage(img, 0, 0);
 
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, canvas.width, canvas.height, {
+                inversionAttempts: "attemptBoth",
+            });
 
             if (code && code.data.trim() !== '') {
                 try {
                     console.log("Step 1 - Decoded QR Code:", code.data);
 
-                    const decodedData = base32768.decode(code.data);
-                    console.log("Step 2 - Base32768 Decoded Data:", decodedData);
+                    // Видаляємо невидимі символи, включаючи BOM
+                    const cleanedData = code.data.replace(/[\u0000-\u001F\u007F\uFEFF]/g, '');
+                    console.log("Step 1.1 - Cleaned QR Code Data:", cleanedData);
 
-                    if (decodedData.length === 0) {
-                        throw new Error("Decoded data is empty after Base32768 decoding.");
-                    }
+                    const decodedData = base32768.decode(cleanedData);
+                    console.log("Step 2 - Base32768 Decoded Data:", decodedData);
 
                     const decompressedData = pako.inflate(decodedData, { to: 'string' });
                     console.log("Step 3 - Decompressed Data:", decompressedData);
 
-                    if (typeof decompressedData !== 'string' || decompressedData.trim() === '') {
-                        throw new Error("Decompressed data is empty or not a string.");
-                    }
+                    const formData = JSON.parse(decompressedData);
 
-                    if (decompressedData.trim().startsWith('{') && decompressedData.trim().endsWith('}')) {
-                        const formData = JSON.parse(decompressedData);
+                    Object.keys(formData).forEach(key => {
+                        if (document.getElementById(key)) {
+                            document.getElementById(key).value = formData[key];
+                        }
+                    });
 
-                        Object.keys(formData).forEach(key => {
-                            if (document.getElementById(key)) {
-                                document.getElementById(key).value = formData[key];
-                            }
-                        });
-
-                        document.getElementById('scanStatus').textContent = 'QR code scanned successfully from image!';
-                        document.getElementById('scanStatus').style.color = 'green';
-                    } else {
-                        throw new Error("Invalid JSON format in decompressed data.");
-                    }
+                    document.getElementById('scanStatus').textContent = '✅ QR code scanned successfully!';
+                    document.getElementById('scanStatus').style.color = 'green';
                 } catch (error) {
-                    console.error('❌ Error parsing QR code from image:', error);
-                    console.log("🔍 Problematic Data:", code.data);
+                    console.error('❌ Error parsing QR code:', error);
                     document.getElementById('scanStatus').textContent = `Error: ${error.message}`;
                     document.getElementById('scanStatus').style.color = 'red';
                 }
@@ -581,6 +571,7 @@ document.getElementById('generateQR').addEventListener('click', () => {
     };
     reader.readAsDataURL(file);
 });
+
       </script>
       
   </body>
