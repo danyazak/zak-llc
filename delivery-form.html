@@ -390,7 +390,7 @@ link.click();
           dynamicFields.appendChild(fieldSet);
         });
 //Генерація QR коду 
-    document.getElementById('generateQR').addEventListener('click', () => {
+document.getElementById('generateQR').addEventListener('click', () => {
     const fields = [
         'companyName', 'driverName', 'truckNumber', 'trailerNumber', 'dateFrom', 'dateTo',
         'cashAdvanceDate1', 'cashAdvanceAmount1', 'cashAdvanceState1',
@@ -449,9 +449,9 @@ link.click();
 
         new QRCode(qrContainer, {
             text: encodedData,
-            width: 300,
-            height: 300,
-            correctLevel: QRCode.CorrectLevel.H
+            width: 400,  // Збільшено розмір для кращої зчитуваності
+            height: 400,
+            correctLevel: QRCode.CorrectLevel.M // Знижено рівень корекції для зменшення щільності
         });
 
         qrStatus.textContent = '✅ QR code generated successfully!';
