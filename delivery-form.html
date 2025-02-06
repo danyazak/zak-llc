@@ -452,39 +452,51 @@ link.click();
         });
 
         document.getElementById('scanQR').addEventListener('click', () => {
-            const html5QrCode = new Html5Qrcode("reader");
-            const scanStatus = document.getElementById('scanStatus');
+    const html5QrCode = new Html5Qrcode("reader");
+    const scanStatus = document.getElementById('scanStatus');
 
-            html5QrCode.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: 300 },
-                (decodedText) => {
-                    try {
-                        const decodedData = base32768.decode(decodedText);
-                        const decompressedData = pako.inflate(decodedData, { to: 'string' });
-                        const formData = JSON.parse(decompressedData);
+    html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 300 },
+        (decodedText) => {
+            try {
+                console.log("Decoded QR Text:", decodedText); // 🔍 Перевірка розкодованого тексту
 
-                        Object.keys(formData).forEach(key => {
-                            if (document.getElementById(key)) {
-                                document.getElementById(key).value = formData[key];
-                            }
-                        });
+                const decodedData = base32768.decode(decodedText);
+                console.log("Base32768 Decoded Data:", decodedData); // 🔍 Перевірка після декодування
 
-                        html5QrCode.stop();
-                        document.getElementById('reader').style.display = 'none';
-                        scanStatus.textContent = 'QR code scanned successfully!';
-                        scanStatus.style.color = 'green';
-                    } catch (error) {
-                        console.error("Error parsing QR code data:", error);
-                        scanStatus.textContent = 'Error parsing QR code data.';
-                        scanStatus.style.color = 'red';
-                    }
-                },
-                (error) => {
-                    console.warn('Scan failed:', error);
+                const decompressedData = pako.inflate(decodedData, { to: 'string' });
+                console.log("Decompressed Data:", decompressedData); // 🔍 Перевірка після розпакування
+
+                // Перевіряємо чи це JSON
+                if (decompressedData.trim().startsWith('{') && decompressedData.trim().endsWith('}')) {
+                    const formData = JSON.parse(decompressedData);
+
+                    Object.keys(formData).forEach(key => {
+                        if (document.getElementById(key)) {
+                            document.getElementById(key).value = formData[key];
+                        }
+                    });
+
+                    html5QrCode.stop();
+                    document.getElementById('reader').style.display = 'none';
+                    scanStatus.textContent = 'QR code scanned successfully!';
+                    scanStatus.style.color = 'green';
+                } else {
+                    throw new Error("Invalid JSON format in decompressed data.");
                 }
-            );
-        });
+            } catch (error) {
+                console.error("Error parsing QR code data:", error);
+                scanStatus.textContent = `Error parsing QR code data: ${error.message}`;
+                scanStatus.style.color = 'red';
+            }
+        },
+        (error) => {
+            console.warn('Scan failed:', error);
+        }
+    );
+});
+
 
         document.getElementById('uploadImage').addEventListener('click', () => {
             document.getElementById('fileInput').click();
