@@ -4,25 +4,26 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Delivery Form</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/jsqr"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
-    <script src="base32768.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://unpkg.com/jsqr"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
+  <script src="base32768.js"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
   <link rel="stylesheet" href="style.css">
 
 </head>
 <body>
     <h1>Delivery Form</h1>
-  
     <form id="form">
-<button type="button" id="scanQR">Scan QR Code (Live)</button>
-        <button type="button" id="uploadImage">Upload QR Code Image</button>
-        <input type="file" id="fileInput" accept="image/*" style="display: none;">
-        <p id="scanStatus" style="text-align: center; font-weight: bold; color: blue;"></p>
-        <div id="reader" style="width: 300px; margin: 20px auto; display: none;"></div>
-        <canvas id="imageCanvas" style="display: none;"></canvas>
+      <button type="button" id="scanQR">Scan QR Code (Live)</button>
+      <button type="button" id="uploadImage">Upload QR Code Image</button>
+      <input type="file" id="uploadPDF" accept="application/pdf">
+      <p id="scanStatus"></p>
+      <input type="file" id="fileInput" accept="image/*" style="display: none;">
+      <p id="scanStatus" style="text-align: center; font-weight: bold; color: blue;"></p>
+      <div id="reader" style="width: 300px; margin: 20px auto; display: none;"></div>
+      <canvas id="imageCanvas" style="display: none;"></canvas>
 
 
       <label>Company Name:</label>
@@ -531,6 +532,58 @@ setTimeout(() => {
         pdf.save('QR_Code.pdf');
     }
 }, 1000);
+      
+      document.getElementById('uploadPDF').addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async function (e) {
+        const pdfData = new Uint8Array(e.target.result);
+
+        const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+        const page = await pdf.getPage(1);
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        const viewport = page.getViewport({ scale: 2 });
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, canvas.width, canvas.height);
+
+        if (code) {
+            try {
+                console.log("Step 1 - Decoded QR Code:", code.data);
+                const cleanedData = code.data.replace(/[\u0000-\u001F\u007F\uFEFF]/g, '');
+                const decodedData = base32768.decode(cleanedData);
+                const decompressedData = pako.inflate(decodedData, { to: 'string' });
+                const formData = JSON.parse(decompressedData);
+
+                Object.keys(formData).forEach(key => {
+                    if (document.getElementById(key)) {
+                        document.getElementById(key).value = formData[key];
+                    }
+                });
+
+                document.getElementById('scanStatus').textContent = '✅ QR code scanned from PDF!';
+                document.getElementById('scanStatus').style.color = 'green';
+            } catch (error) {
+                console.error('❌ Error parsing QR code from PDF:', error);
+                document.getElementById('scanStatus').textContent = `Error: ${error.message}`;
+                document.getElementById('scanStatus').style.color = 'red';
+            }
+        } else {
+            document.getElementById('scanStatus').textContent = '⚠️ No QR code detected in the PDF.';
+            document.getElementById('scanStatus').style.color = 'orange';
+        }
+    };
+
+    reader.readAsArrayBuffer(file);
+});
       </script>
       
   </body>
