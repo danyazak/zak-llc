@@ -7,7 +7,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/jsqr"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/base32768@1.1.0/base32768.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/qntm/base32768@latest/base32768.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 
@@ -452,8 +452,6 @@ link.click();
         });
 
         document.getElementById('scanQR').addEventListener('click', () => {
-            document.getElementById('reader').style.display = 'block';
-
             const html5QrCode = new Html5Qrcode("reader");
             const scanStatus = document.getElementById('scanStatus');
 
