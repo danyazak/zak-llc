@@ -139,4 +139,4 @@ const decode = str => {
   return new Uint8Array(uint8Array.buffer, 0, numUint8s)
 }
 
-export { encode, decode }
+window.base32768 = { encode, decode };
