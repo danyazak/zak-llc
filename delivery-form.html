@@ -534,20 +534,26 @@ document.getElementById('generateQR').addEventListener('click', () => {
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const code = jsQR(imageData.data, canvas.width, canvas.height);
 
-            if (code) {
+            if (code && code.data.trim() !== '') {
                 try {
                     console.log("Step 1 - Decoded QR Code:", code.data);
 
                     const decodedData = base32768.decode(code.data);
                     console.log("Step 2 - Base32768 Decoded Data:", decodedData);
 
+                    if (decodedData.length === 0) {
+                        throw new Error("Decoded data is empty after Base32768 decoding.");
+                    }
+
                     const decompressedData = pako.inflate(decodedData, { to: 'string' });
                     console.log("Step 3 - Decompressed Data:", decompressedData);
 
-                    // Перевірка чи це JSON
+                    if (typeof decompressedData !== 'string' || decompressedData.trim() === '') {
+                        throw new Error("Decompressed data is empty or not a string.");
+                    }
+
                     if (decompressedData.trim().startsWith('{') && decompressedData.trim().endsWith('}')) {
-                        console.log("Step 4 - Valid JSON detected. Proceeding to parse.");
-                        const formData = JSON.parse(decompressedData); // 🛠️ Проблемний рядок
+                        const formData = JSON.parse(decompressedData);
 
                         Object.keys(formData).forEach(key => {
                             if (document.getElementById(key)) {
@@ -562,19 +568,19 @@ document.getElementById('generateQR').addEventListener('click', () => {
                     }
                 } catch (error) {
                     console.error('❌ Error parsing QR code from image:', error);
-                    console.log("🔍 Problematic Data:", decompressedData); // Виводимо проблемні дані
-                    document.getElementById('scanStatus').textContent = `Error parsing QR code from image: ${error.message}`;
+                    console.log("🔍 Problematic Data:", code.data);
+                    document.getElementById('scanStatus').textContent = `Error: ${error.message}`;
                     document.getElementById('scanStatus').style.color = 'red';
                 }
             } else {
-                document.getElementById('scanStatus').textContent = 'No QR code detected in the image.';
-                document.getElementById('scanStatus').style.color = 'red';
+                console.warn('⚠️ No data detected in the QR code.');
+                document.getElementById('scanStatus').textContent = 'No data found in the QR code.';
+                document.getElementById('scanStatus').style.color = 'orange';
             }
         };
     };
     reader.readAsDataURL(file);
 });
-
       </script>
       
   </body>
