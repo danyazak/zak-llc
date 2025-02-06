@@ -225,8 +225,7 @@
         <button type="button" id="generateQR">Generate QR Code</button>
         <p id="qrStatus" style="text-align: center; font-weight: bold; color: green;"></p>
         <p id="dataSize" style="text-align: center; font-style: italic;"></p>
-        <canvas id="qrcode" style="margin: 20px auto; display: block;"></canvas>
-    </form>
+<div id="qrcode" style="margin: 20px auto; display: block;"></div>    </form>
   
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
     <script>
@@ -390,7 +389,30 @@ link.click();
           dynamicFields.appendChild(fieldSet);
         });
 //Генерація QR коду 
-document.getElementById('generateQR').addEventListener('click', () => {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/jsqr"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.0.4/pako.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+    <h1>Delivery Form</h1>
+    <form id="form">
+        <button type="button" id="scanQR">Scan QR Code (Live)</button>
+        <button type="button" id="uploadImage">Upload QR Code Image</button>
+        <button type="button" id="generateQR">Generate QR Code</button>
+        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+        <p id="scanStatus" style="text-align: center; font-weight: bold; color: blue;"></p>
+        <div id="reader" style="width: 300px; margin: 20px auto; display: none;"></div>
+        <div id="qrcode" style="margin: 20px auto; display: block;"></div>
+        <p id="qrStatus" style="text-align: center; font-weight: bold; color: green;"></p>
+        <p id="dataSize" style="text-align: center; font-style: italic;"></p>
+    </form>
+
+    <script>
+        document.getElementById('generateQR').addEventListener('click', () => {
             const fields = [
                 'companyName', 'driverName', 'truckNumber', 'trailerNumber', 'dateFrom', 'dateTo',
                 'cashAdvanceDate1', 'cashAdvanceAmount1', 'cashAdvanceState1',
@@ -426,20 +448,20 @@ document.getElementById('generateQR').addEventListener('click', () => {
             const jsonData = JSON.stringify(formData);
             const compressedData = pako.deflate(jsonData, { to: 'string' });
 
-            const canvas = document.getElementById('qrcode');
+            const qrContainer = document.getElementById('qrcode');
             const qrStatus = document.getElementById('qrStatus');
             const dataSize = document.getElementById('dataSize');
 
-            canvas.innerHTML = '';
+            qrContainer.innerHTML = '';
             qrStatus.textContent = '';
             dataSize.textContent = `Data size: ${compressedData.length} characters`;
 
             try {
-                new QRCode(canvas, {
+                new QRCode(qrContainer, {
                     text: btoa(compressedData),
                     width: 300,
-                    margin: 4,
-                    errorCorrectionLevel: 'H'
+                    height: 300,
+                    correctLevel: QRCode.CorrectLevel.H
                 });
                 qrStatus.textContent = 'QR code generated successfully!';
                 qrStatus.style.color = 'green';
