@@ -510,8 +510,13 @@ document.getElementById('generateQR').addEventListener('click', () => {
 });
 
 
-        document.getElementById('uploadImage').addEventListener('click', () => {
-            document.getElementById('fileInput').addEventListener('change', (event) => {
+        // Обробка кнопки для завантаження зображення
+document.getElementById('uploadImage').addEventListener('click', () => {
+    document.getElementById('fileInput').click();
+});
+
+// Обробка завантаженого зображення
+document.getElementById('fileInput').addEventListener('change', (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
