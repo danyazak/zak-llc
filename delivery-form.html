@@ -110,7 +110,9 @@
 
 <!-- jsPDF бібліотека -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
+<script>
+    window.jsPDF = window.jspdf.jsPDF;  // Виправлення доступу до jsPDF
+</script>
 <script>
     // Резервне підключення, якщо основне не працює
     function loadBackupQRCode() {
@@ -495,7 +497,19 @@ document.getElementById('fileInput').addEventListener('change', (event) => {
     reader.readAsDataURL(file);
 });
 
+setTimeout(() => {
+    const qrImage = document.querySelector('#qrcode img');
+    if (qrImage) {
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: [150, 150]
+        });
 
+        pdf.addImage(qrImage.src, 'PNG', 10, 10, 130, 130);
+        pdf.save('QR_Code.pdf');
+    }
+}, 1000);
       </script>
       
   </body>
