@@ -550,33 +550,44 @@ setTimeout(() => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
 
-            const viewport = page.getViewport({ scale: 2 });
+            // Збільшуємо якість рендерингу PDF
+            const scale = 3; // Спробуйте 3 або більше для кращого розпізнавання
+            const viewport = page.getViewport({ scale });
             canvas.width = viewport.width;
             canvas.height = viewport.height;
 
+            console.log("Rendering PDF page...");
             await page.render({ canvasContext: ctx, viewport }).promise;
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, canvas.width, canvas.height);
+            console.log("PDF page rendered.");
 
-            if (code) {
+            // Отримуємо ImageData з рендеру
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            console.log("Extracted ImageData from PDF canvas.");
+
+            // Налаштовуємо `jsQR` для кращого розпізнавання
+            const code = jsQR(imageData.data, canvas.width, canvas.height, {
+                inversionAttempts: "attemptBoth",
+                tryHarder: true, // Додаткова опція для важких QR-кодів
+            });
+
+            if (code && code.data.trim() !== '') {
                 try {
                     console.log("Step 1 - Decoded QR Code:", code.data);
 
-                    // 🟢 Видаляємо всі можливі зайві символи
+                    // 🟢 Видаляємо невидимі символи та BOM
                     let cleanedData = code.data.replace(/[\u0000-\u001F\u007F\uFEFF]/g, '').trim();
                     console.log("Step 1.1 - Cleaned QR Code Data:", cleanedData);
 
-                    // 🟢 Декодуємо з Base32768
+                    // 🟢 Декодуємо Base32768
                     let decodedData = base32768.decode(cleanedData);
                     console.log("Step 2 - Base32768 Decoded Data:", decodedData);
 
-                    // 🟢 Декодуємо JSON (додаємо додаткову перевірку)
+                    // 🟢 Декодуємо JSON
                     let decompressedData = pako.inflate(decodedData, { to: 'string' });
                     console.log("Step 3 - Decompressed Data:", decompressedData);
 
-                    // 🔍 Очищаємо JSON від зайвих символів
+                    // 🔍 Очищаємо JSON перед парсингом
                     decompressedData = decompressedData.replace(/[\u0000-\u001F\u007F\uFEFF]/g, '').trim();
-
                     const formData = JSON.parse(decompressedData);
                     console.log("Step 4 - Parsed Form Data:", formData);
 
@@ -595,7 +606,8 @@ setTimeout(() => {
                     document.getElementById('scanStatus').style.color = 'red';
                 }
             } else {
-                document.getElementById('scanStatus').textContent = '⚠️ No QR code detected in the PDF.';
+                console.warn('⚠️ No data detected in the QR code.');
+                document.getElementById('scanStatus').textContent = 'No QR code detected in the PDF.';
                 document.getElementById('scanStatus').style.color = 'orange';
             }
         } catch (error) {
@@ -607,6 +619,7 @@ setTimeout(() => {
 
     reader.readAsArrayBuffer(file);
 });
+
       </script>
       
   </body>
