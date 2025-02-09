@@ -12,6 +12,7 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@zxing/library@1.10.1/umd/index.min.js"></script>
   <script>
       pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
   </script>
@@ -514,8 +515,8 @@ document.getElementById('uploadPDF').addEventListener('change', async (event) =>
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
 
-            // 📌 ВАЖЛИВО: Збільшення масштабу для кращого розпізнавання
-            const scale = 3; 
+            // 📌 Масштаб для високої точності
+            const scale = 3;
             const viewport = page.getViewport({ scale });
             canvas.width = viewport.width;
             canvas.height = viewport.height;
@@ -524,28 +525,30 @@ document.getElementById('uploadPDF').addEventListener('change', async (event) =>
             await page.render({ canvasContext: ctx, viewport }).promise;
             console.log("PDF page rendered.");
 
-            // 📌 Використовуємо `jsQR` для декодування QR-коду
+            // Отримуємо зображення з canvas
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, canvas.width, canvas.height, {
-                inversionAttempts: "attemptBoth",
-                tryHarder: true,
-            });
+            const luminanceSource = new ZXing.HTMLCanvasElementLuminanceSource(canvas);
+            const binaryBitmap = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(luminanceSource));
 
-            if (code) {
-                console.log("Step 1 - Decoded QR Code:", code.data);
+            const reader = new ZXing.MultiFormatReader();
+            const hints = new Map();
+            hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+            reader.setHints(hints);
 
-                let cleanedData = code.data.replace(/[\u0000-\u001F\u007F\uFEFF]/g, '').trim();
+            try {
+                const result = reader.decode(binaryBitmap);
+                console.log("Step 1 - Decoded QR Code:", result.getText());
+
+                const cleanedData = result.getText().replace(/[\u0000-\u001F\u007F\uFEFF]/g, '').trim();
                 console.log("Step 1.1 - Cleaned QR Code Data:", cleanedData);
 
-                let decodedData = base32768.decode(cleanedData);
+                const decodedData = base32768.decode(cleanedData);
                 console.log("Step 2 - Base32768 Decoded Data:", decodedData);
 
-                let decompressedData = pako.inflate(decodedData, { to: 'string' });
+                const decompressedData = pako.inflate(decodedData, { to: 'string' });
                 console.log("Step 3 - Decompressed Data:", decompressedData);
 
-                decompressedData = decompressedData.replace(/[\u0000-\u001F\u007F\uFEFF]/g, '').trim();
                 const formData = JSON.parse(decompressedData);
-                console.log("Step 4 - Parsed Form Data:", formData);
 
                 Object.keys(formData).forEach(key => {
                     if (document.getElementById(key)) {
@@ -556,8 +559,8 @@ document.getElementById('uploadPDF').addEventListener('change', async (event) =>
                 document.getElementById('scanStatus').textContent = '✅ QR code scanned from PDF!';
                 document.getElementById('scanStatus').style.color = 'green';
 
-            } else {
-                console.warn('⚠️ No data detected in the QR code.');
+            } catch (zxingError) {
+                console.warn('⚠️ No QR code detected or error in decoding with Zxing:', zxingError.message);
                 document.getElementById('scanStatus').textContent = 'No QR code detected in the PDF.';
                 document.getElementById('scanStatus').style.color = 'orange';
             }
