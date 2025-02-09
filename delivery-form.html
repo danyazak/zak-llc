@@ -312,7 +312,7 @@ document.getElementById('generateQR').addEventListener('click', () => {
         ...Array.from({ length: 5 }, (_, i) => `repairsDescription${i + 1}`)
     ];
 
-  const formData = {};
+    const formData = {};
     fields.forEach(field => {
         const value = document.getElementById(field)?.value.trim();
         if (value) {
@@ -320,55 +320,45 @@ document.getElementById('generateQR').addEventListener('click', () => {
         }
     });
 
-    console.log("Step 1 - Raw Form Data:", formData);
-
     try {
         const jsonData = JSON.stringify(formData);
-        console.log("Step 2 - JSON Data:", jsonData);
-
         const compressedData = pako.deflate(jsonData);
-        console.log("Step 3 - Compressed Data (Uint8Array):", compressedData);
-
         const encodedData = base32768.encode(new Uint8Array(compressedData));
-        console.log("Step 4 - Encoded Data (Base32768):", encodedData);
+
+        const qrContainer = document.getElementById('qrcode');
+        qrContainer.innerHTML = '';
 
         if (encodedData.length === 0) {
             throw new Error("Encoded data is empty, cannot generate QR code.");
         }
 
-        // 🎯 Генеруємо QR-код у <canvas>
-        const canvas = document.createElement('canvas');
-        const qrCode = new QRCode(canvas, {
+        new QRCode(qrContainer, {
             text: encodedData,
-            width: 400, // Розмір QR-коду
+            width: 400,
             height: 400,
             correctLevel: QRCode.CorrectLevel.M
         });
 
-        // 🕒 Чекаємо, поки QR-код згенерується
         setTimeout(() => {
-            const qrImage = canvas.toDataURL("image/png");
-            console.log("Step 5 - QR Code Image Generated:", qrImage);
+            const qrImage = qrContainer.querySelector('img');
+            if (qrImage) {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: [150, 150]
+                });
 
-            // 📄 Створюємо PDF
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF({
-                orientation: 'portrait',
-                unit: 'mm',
-                format: [210, 297] // A4
-            });
-
-            pdf.text("Generated QR Code", 80, 20);
-            pdf.addImage(qrImage, 'PNG', 55, 30, 100, 100); // Розмір QR-коду у PDF
-            pdf.save('QR_Code.pdf');
+                pdf.addImage(qrImage.src, 'PNG', 10, 10, 130, 130);
+                pdf.save('QR_Code.pdf');
+            }
         }, 1000);
 
     } catch (err) {
         console.error('❌ QR code generation error:', err);
-        document.getElementById('qrStatus').textContent = 'QR code generation failed!';
-        document.getElementById('qrStatus').style.color = 'red';
     }
 });
+
 
 
         document.getElementById('scanQR').addEventListener('click', () => {
