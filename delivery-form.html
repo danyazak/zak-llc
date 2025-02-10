@@ -542,45 +542,36 @@ document.getElementById('uploadPDF').addEventListener('change', async (event) =>
 
                     const imageData = imgCtx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
 
-                    // Використовуємо jsQR для аналізу зображення
-                    const code = jsQR(imageData.data, imgCanvas.width, imgCanvas.height, {
-                        inversionAttempts: 'attemptBoth',
-                    });
+                    // Використовуємо QrScanner для аналізу зображення
+const qrScanner = new QrScanner(imgCanvas, (result) => {
+    try {
+        console.log("QR Scanner Detected Code:", result);
 
-                    if (code) {
-                        console.log("Decoded QR Code:", code.data);
+        const cleanedData = result.replace(/[\u0000-\u001F\u007F\uFEFF]/g, '').trim();
+        const decodedData = base32768.decode(cleanedData);
+        const decompressedData = pako.inflate(decodedData, { to: 'string' });
+        const formData = JSON.parse(decompressedData);
 
-                        const cleanedData = code.data.replace(/[\u0000-\u001F\u007F\uFEFF]/g, '').trim();
-                        const decodedData = base32768.decode(cleanedData);
-                        const decompressedData = pako.inflate(decodedData, { to: 'string' });
-                        const formData = JSON.parse(decompressedData);
-
-                        Object.keys(formData).forEach(key => {
-                            if (document.getElementById(key)) {
-                                document.getElementById(key).value = formData[key];
-                            }
-                        });
-
-                        document.getElementById('scanStatus').textContent = `✅ QR code scanned successfully from page ${pageNumber}!`;
-                        document.getElementById('scanStatus').style.color = 'green';
-                        return;
-                    } else {
-                        console.warn(`⚠️ No QR code detected on page ${pageNumber}.`);
-                    }
-                };
+        // Заповнюємо форму
+        Object.keys(formData).forEach(key => {
+            if (document.getElementById(key)) {
+                document.getElementById(key).value = formData[key];
             }
+        });
 
-            document.getElementById('scanStatus').textContent = '⚠️ No QR code detected in the PDF.';
-            document.getElementById('scanStatus').style.color = 'orange';
-        } catch (error) {
-            console.error('Error processing PDF:', error);
-            document.getElementById('scanStatus').textContent = `PDF processing error: ${error.message}`;
-            document.getElementById('scanStatus').style.color = 'red';
-        }
-    };
+        document.getElementById('scanStatus').textContent = `✅ QR code scanned successfully from page ${pageNumber}!`;
+        document.getElementById('scanStatus').style.color = 'green';
 
-    reader.readAsArrayBuffer(file);
+        qrScanner.stop(); // Зупиняємо сканер після успішного розпізнавання
+    } catch (error) {
+        console.error('❌ Error parsing QR code:', error);
+        document.getElementById('scanStatus').textContent = `Error: ${error.message}`;
+        document.getElementById('scanStatus').style.color = 'red';
+    }
 });
+
+// Запуск сканера
+qrScanner.start();
 
       </script>
       
