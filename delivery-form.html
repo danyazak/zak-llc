@@ -119,6 +119,24 @@
 <script>
     window.jsPDF = window.jspdf.jsPDF;  // Виправлення доступу до jsPDF
 </script>
+  <script type="module">
+    import QrScanner from "https://cdn.jsdelivr.net/npm/qr-scanner/qr-scanner.min.js";
+
+    const fileInput = document.getElementById('fileInput');
+    fileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        QrScanner.scanImage(file, { returnDetailedScanResult: true })
+            .then(result => {
+                console.log('Decoded QR Code:', result.data);
+                // Обробка результату
+            })
+            .catch(error => {
+                console.error('Failed to decode QR Code:', error);
+            });
+    });
+</script>
 <script>
     // Резервне підключення, якщо основне не працює
     function loadBackupQRCode() {
