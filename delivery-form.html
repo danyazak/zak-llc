@@ -519,7 +519,7 @@ document.getElementById('uploadPDF').addEventListener('change', async (event) =>
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
 
-                const scale = 10; // Збільшений масштаб для максимальної деталізації
+                const scale = 5; // Збільшений масштаб для максимальної деталізації
                 const viewport = page.getViewport({ scale });
                 canvas.width = viewport.width;
                 canvas.height = viewport.height;
@@ -528,51 +528,56 @@ document.getElementById('uploadPDF').addEventListener('change', async (event) =>
                 await page.render({ canvasContext: ctx, viewport }).promise;
                 console.log(`Page ${pageNumber} rendered.`);
 
-                // Експорт canvas як PNG
+                // Експорт canvas як зображення
                 const imageURL = canvas.toDataURL('image/png');
                 const img = new Image();
                 img.src = imageURL;
 
-                img.onload = function () {
-                    const imgCanvas = document.createElement('canvas');
-                    const imgCtx = imgCanvas.getContext('2d');
+                // Використання QrScanner для розпізнавання
+                img.onload = async function () {
+                    try {
+                        console.log(`Analyzing page ${pageNumber} for QR code...`);
 
-                    imgCanvas.width = img.width;
-                    imgCanvas.height = img.height;
-                    imgCtx.drawImage(img, 0, 0);
+                        const qrScanner = new QrScanner(img, (result) => {
+                            console.log("QR Scanner Detected Code:", result);
 
-                    const imageData = imgCtx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
+                            // Обробка результату
+                            const cleanedData = result.replace(/[\u0000-\u001F\u007F\uFEFF]/g, '').trim();
+                            const decodedData = base32768.decode(cleanedData);
+                            const decompressedData = pako.inflate(decodedData, { to: 'string' });
+                            const formData = JSON.parse(decompressedData);
 
-                    // Використовуємо QrScanner для аналізу зображення
-const qrScanner = new QrScanner(imgCanvas, (result) => {
-    try {
-        console.log("QR Scanner Detected Code:", result);
+                            // Заповнення форми
+                            Object.keys(formData).forEach(key => {
+                                if (document.getElementById(key)) {
+                                    document.getElementById(key).value = formData[key];
+                                }
+                            });
 
-        const cleanedData = result.replace(/[\u0000-\u001F\u007F\uFEFF]/g, '').trim();
-        const decodedData = base32768.decode(cleanedData);
-        const decompressedData = pako.inflate(decodedData, { to: 'string' });
-        const formData = JSON.parse(decompressedData);
+                            document.getElementById('scanStatus').textContent = `✅ QR code scanned successfully from page ${pageNumber}!`;
+                            document.getElementById('scanStatus').style.color = 'green';
 
-        // Заповнюємо форму
-        Object.keys(formData).forEach(key => {
-            if (document.getElementById(key)) {
-                document.getElementById(key).value = formData[key];
+                            qrScanner.stop(); // Зупиняємо сканер після розпізнавання
+                        });
+
+                        // Запуск сканера
+                        qrScanner.start();
+                    } catch (error) {
+                        console.error(`❌ Error parsing QR code on page ${pageNumber}:`, error);
+                        document.getElementById('scanStatus').textContent = `Error parsing QR code on page ${pageNumber}: ${error.message}`;
+                        document.getElementById('scanStatus').style.color = 'red';
+                    }
+                };
             }
-        });
+        } catch (error) {
+            console.error('Error processing PDF:', error);
+            document.getElementById('scanStatus').textContent = `PDF processing error: ${error.message}`;
+            document.getElementById('scanStatus').style.color = 'red';
+        }
+    };
 
-        document.getElementById('scanStatus').textContent = `✅ QR code scanned successfully from page ${pageNumber}!`;
-        document.getElementById('scanStatus').style.color = 'green';
-
-        qrScanner.stop(); // Зупиняємо сканер після успішного розпізнавання
-    } catch (error) {
-        console.error('❌ Error parsing QR code:', error);
-        document.getElementById('scanStatus').textContent = `Error: ${error.message}`;
-        document.getElementById('scanStatus').style.color = 'red';
-    }
+    reader.readAsArrayBuffer(file);
 });
-
-// Запуск сканера
-qrScanner.start();
 
 
       </script>
