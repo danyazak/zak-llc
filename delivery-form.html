@@ -514,10 +514,11 @@ document.getElementById('uploadPDF').addEventListener('change', async (event) =>
             for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
                 const page = await pdf.getPage(pageNumber);
 
+                // Створюємо canvas для рендерингу
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
 
-                const scale = 1; // Підвищений масштаб
+                const scale = 10; // Збільшений масштаб для максимальної деталізації
                 const viewport = page.getViewport({ scale });
                 canvas.width = viewport.width;
                 canvas.height = viewport.height;
@@ -526,36 +527,47 @@ document.getElementById('uploadPDF').addEventListener('change', async (event) =>
                 await page.render({ canvasContext: ctx, viewport }).promise;
                 console.log(`Page ${pageNumber} rendered.`);
 
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const luminanceSource = new ZXing.HTMLCanvasElementLuminanceSource(canvas);
-                const binaryBitmap = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(luminanceSource));
+                // Експорт canvas як PNG
+                const imageURL = canvas.toDataURL('image/png');
+                const img = new Image();
+                img.src = imageURL;
 
-                const reader = new ZXing.MultiFormatReader();
-                const hints = new Map();
-                hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-                reader.setHints(hints);
+                img.onload = function () {
+                    const imgCanvas = document.createElement('canvas');
+                    const imgCtx = imgCanvas.getContext('2d');
 
-                try {
-                    const result = reader.decode(binaryBitmap);
-                    console.log("Decoded QR Code:", result.getText());
+                    imgCanvas.width = img.width;
+                    imgCanvas.height = img.height;
+                    imgCtx.drawImage(img, 0, 0);
 
-                    const cleanedData = result.getText().replace(/[\u0000-\u001F\u007F\uFEFF]/g, '').trim();
-                    const decodedData = base32768.decode(cleanedData);
-                    const decompressedData = pako.inflate(decodedData, { to: 'string' });
-                    const formData = JSON.parse(decompressedData);
+                    const imageData = imgCtx.getImageData(0, 0, imgCanvas.width, imgCanvas.height);
 
-                    Object.keys(formData).forEach(key => {
-                        if (document.getElementById(key)) {
-                            document.getElementById(key).value = formData[key];
-                        }
+                    // Використовуємо jsQR для аналізу зображення
+                    const code = jsQR(imageData.data, imgCanvas.width, imgCanvas.height, {
+                        inversionAttempts: 'attemptBoth',
                     });
 
-                    document.getElementById('scanStatus').textContent = `✅ QR code scanned successfully from page ${pageNumber}!`;
-                    document.getElementById('scanStatus').style.color = 'green';
-                    return;
-                } catch (zxingError) {
-                    console.warn(`No QR code detected on page ${pageNumber}:`, zxingError.message);
-                }
+                    if (code) {
+                        console.log("Decoded QR Code:", code.data);
+
+                        const cleanedData = code.data.replace(/[\u0000-\u001F\u007F\uFEFF]/g, '').trim();
+                        const decodedData = base32768.decode(cleanedData);
+                        const decompressedData = pako.inflate(decodedData, { to: 'string' });
+                        const formData = JSON.parse(decompressedData);
+
+                        Object.keys(formData).forEach(key => {
+                            if (document.getElementById(key)) {
+                                document.getElementById(key).value = formData[key];
+                            }
+                        });
+
+                        document.getElementById('scanStatus').textContent = `✅ QR code scanned successfully from page ${pageNumber}!`;
+                        document.getElementById('scanStatus').style.color = 'green';
+                        return;
+                    } else {
+                        console.warn(`⚠️ No QR code detected on page ${pageNumber}.`);
+                    }
+                };
             }
 
             document.getElementById('scanStatus').textContent = '⚠️ No QR code detected in the PDF.';
@@ -569,8 +581,6 @@ document.getElementById('uploadPDF').addEventListener('change', async (event) =>
 
     reader.readAsArrayBuffer(file);
 });
-
-
 
       </script>
       
