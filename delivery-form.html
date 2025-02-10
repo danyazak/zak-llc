@@ -510,63 +510,72 @@ document.getElementById('uploadPDF').addEventListener('change', async (event) =>
         try {
             const pdfData = new Uint8Array(e.target.result);
             const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
-            const page = await pdf.getPage(1);
 
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
+            // Опрацювання всіх сторінок PDF
+            for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+                const page = await pdf.getPage(pageNumber);
 
-            // Set scale for high resolution scanning
-            const scale = 3;
-            const viewport = page.getViewport({ scale });
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
 
-            console.log("Rendering PDF page...");
-            await page.render({ canvasContext: ctx, viewport }).promise;
-            console.log("PDF page rendered.");
+                // Масштаб для високої роздільної здатності
+                const scale = 4; // Можна збільшити для покращення якості
+                const viewport = page.getViewport({ scale });
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
 
-            // Extract QR code from canvas using jsQR
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, canvas.width, canvas.height, {
-                inversionAttempts: "attemptBoth",
-                willTryWithoutInversion: true,
-            });
+                console.log(`Rendering page ${pageNumber}...`);
+                await page.render({ canvasContext: ctx, viewport }).promise;
+                console.log(`Page ${pageNumber} rendered.`);
 
-            if (code && code.data.trim() !== '') {
-                try {
-                    console.log("Step 1 - Decoded QR Code:", code.data);
+                // Отримуємо дані зображення для QR-коду
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, canvas.width, canvas.height, {
+                    inversionAttempts: "attemptBoth",
+                    willTryWithoutInversion: true,
+                });
 
-                    const cleanedData = code.data.replace(/[\u0000-\u001F\u007F\uFEFF]/g, '');
-                    console.log("Step 1.1 - Cleaned QR Code Data:", cleanedData);
+                if (code && code.data.trim() !== '') {
+                    try {
+                        console.log(`Step 1 - Decoded QR Code from Page ${pageNumber}:`, code.data);
 
-                    const decodedData = base32768.decode(cleanedData);
-                    console.log("Step 2 - Base32768 Decoded Data:", decodedData);
+                        const cleanedData = code.data.replace(/[\u0000-\u001F\u007F\uFEFF]/g, '');
+                        console.log("Step 1.1 - Cleaned QR Code Data:", cleanedData);
 
-                    const decompressedData = pako.inflate(decodedData, { to: 'string' });
-                    console.log("Step 3 - Decompressed Data:", decompressedData);
+                        const decodedData = base32768.decode(cleanedData);
+                        console.log("Step 2 - Base32768 Decoded Data:", decodedData);
 
-                    const formData = JSON.parse(decompressedData);
-                    console.log("Step 4 - Parsed Form Data:", formData);
+                        const decompressedData = pako.inflate(decodedData, { to: 'string' });
+                        console.log("Step 3 - Decompressed Data:", decompressedData);
 
-                    Object.keys(formData).forEach(key => {
-                        if (document.getElementById(key)) {
-                            document.getElementById(key).value = formData[key];
-                        }
-                    });
+                        const formData = JSON.parse(decompressedData);
+                        console.log("Step 4 - Parsed Form Data:", formData);
 
-                    document.getElementById('scanStatus').textContent = '✅ QR code scanned from PDF!';
-                    document.getElementById('scanStatus').style.color = 'green';
+                        // Заповнюємо форму
+                        Object.keys(formData).forEach(key => {
+                            if (document.getElementById(key)) {
+                                document.getElementById(key).value = formData[key];
+                            }
+                        });
 
-                } catch (error) {
-                    console.error('❌ Error parsing QR code:', error);
-                    document.getElementById('scanStatus').textContent = `Error: ${error.message}`;
-                    document.getElementById('scanStatus').style.color = 'red';
+                        document.getElementById('scanStatus').textContent = `✅ QR code scanned successfully from page ${pageNumber}!`;
+                        document.getElementById('scanStatus').style.color = 'green';
+
+                        // Завершуємо, якщо QR-код знайдено
+                        return;
+                    } catch (error) {
+                        console.error(`❌ Error parsing QR code from page ${pageNumber}:`, error);
+                        document.getElementById('scanStatus').textContent = `Error: ${error.message}`;
+                        document.getElementById('scanStatus').style.color = 'red';
+                    }
                 }
-            } else {
-                console.warn('⚠️ No QR code detected in the PDF.');
-                document.getElementById('scanStatus').textContent = 'No QR code detected in the PDF.';
-                document.getElementById('scanStatus').style.color = 'orange';
             }
+
+            // Якщо після перевірки всіх сторінок QR-код не знайдено
+            console.warn('⚠️ No QR code detected in the PDF.');
+            document.getElementById('scanStatus').textContent = 'No QR code detected in the PDF.';
+            document.getElementById('scanStatus').style.color = 'orange';
+
         } catch (error) {
             console.error('❌ Error processing PDF:', error);
             document.getElementById('scanStatus').textContent = `PDF processing error: ${error.message}`;
@@ -576,6 +585,7 @@ document.getElementById('uploadPDF').addEventListener('change', async (event) =>
 
     reader.readAsArrayBuffer(file);
 });
+
       </script>
       
   </body>
